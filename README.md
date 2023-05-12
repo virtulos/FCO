@@ -10,6 +10,7 @@ This repository contains the source code for Fanatico smart contracts (FCO) deve
     - [Compile Contracts](#compile-contracts)
     - [Run Tests](#run-tests)
     - [Generate Coverage Report](#generate-coverage-report)
+    - [Deploy Contracts](#deploy-contracts)
 - [License](#license)
 
 ## Prerequisites
@@ -48,6 +49,17 @@ To run the tests, run the following command:
 To generate the code coverage report, run the following command:
 
 `yarn coverage` or `npm run coverage`
+
+
+### Deploy Contracts
+
+To deploy the contracts to the BSC testnet network, run the following command:
+
+`yarn deploy` or `npm run deploy`
+
+> Note: make sure to set the `BSC_TESTNET_PRIVATE_KEY` environment variable to the private key of the account that will deploy the contracts.
+
+
 
 ## License
 

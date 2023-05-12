@@ -8,8 +8,15 @@
   "license": "MIT",
   "scripts": {
     "compile": "npx hardhat compile",
+    "clean": "rm -rf cache && rm -rf artifacts && npx hardhat clean",
     "test": "npx hardhat test",
-    "coverage": "npx hardhat coverage"
+    "coverage": "npx hardhat coverage",
+    "deploy": "npx hardhat run --config hardhat.config.js --network BSCTestnet scripts/deploy.js",
+    "verify": "npx hardhat run --config hardhat.config.js --network BSCTestnet scripts/verify.js"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.8.3",
+    "@openzeppelin/contracts-upgradeable": "^4.8.3"
   },
   "devDependencies": {
     "@ethersproject/abi": "^5.4.7",
