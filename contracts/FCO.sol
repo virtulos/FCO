@@ -35,6 +35,8 @@ contract FANATICO is ERC20, ERC20Burnable, ERC20FlashMint, AccessControl, Reentr
     uint public constant SIGNUP_REWARDS = 3 * 10 ** 18; // 3 token max per signup
     uint public constant DAILY_REWARDS = 1 * 10 ** 18; // 1 token max per day
 
+    address public lubAuctionAddress;
+
     error InsufficientBalance(uint _amount);
     error InsufficientUnlocked();
     error ZeroValueNotAllowed();
@@ -43,6 +45,7 @@ contract FANATICO is ERC20, ERC20Burnable, ERC20FlashMint, AccessControl, Reentr
     event TokensUnlocked(address indexed _owner, uint indexed _amount);
     event SignupBonusClaimed(address indexed _owner, uint indexed _amount);
     event DailyRewardsClaimed(address indexed _owner, uint indexed _amount);
+    event LubAuctionAddressChanged(address indexed _oldAddress, address indexed _newAddress);
 
     function zeroValueCheck(uint _amount) private pure {
         if (_amount == 0) {
@@ -160,5 +163,16 @@ contract FANATICO is ERC20, ERC20Burnable, ERC20FlashMint, AccessControl, Reentr
         unlockedBalanceOf[to] += amount;
 
         super._afterTokenTransfer(from, to, amount);
+    }
+
+    function changeLubAuctionAddress(address _lubAuctionAddress) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(_lubAuctionAddress != address(0), "Zero address not allowed for LUB auction");
+
+        if (_lubAuctionAddress != lubAuctionAddress) {
+            address oldAddress = lubAuctionAddress;
+            lubAuctionAddress = _lubAuctionAddress;
+
+            emit LubAuctionAddressChanged(oldAddress, _lubAuctionAddress);
+        }
     }
 }
