@@ -141,6 +141,28 @@ contract FANATICO is ERC20, ERC20Burnable, ERC20FlashMint, AccessControl, Reentr
         unlockedBalanceOf[account] = unlocked;
     }
 
+    function _unlockForAuction(address owner, uint256 amount) private {
+        ensureBalanceEnough(owner, amount);
+        require(amount <= balanceOf(owner) - unlockedBalanceOf[owner], "Not enough locked tokens");
+
+        uint256 unlockedNew;
+
+        LockedToken[] storage lockedTokens = _lockedTokens[account];
+        for (uint i = lockedTokens.length; i > 0; i--) {
+            if (lockedTokens[i - 1].amount <= amount) {
+                unlockedNew += lockedTokens[i - 1].amount;
+                amount -= lockedTokens[i - 1].amount;
+                lockedTokens.pop();
+            } else {
+                unlockedNew += amount;
+                lockedTokens[i - 1].amount -= amount;
+                break;
+            }
+        }
+
+        require(unlockedNew == amount, "Unlocked amount mismatch");
+    }
+
     function _beforeTokenTransfer(address from, address to, uint256 amount) internal override {
         if (from == address(0)) {
             return;
@@ -148,7 +170,11 @@ contract FANATICO is ERC20, ERC20Burnable, ERC20FlashMint, AccessControl, Reentr
 
         require(amount <= MAX_TRANSFER_PER_TRANSACTION, "MAX_TRANSFER_PER_TRANSACTION");
         if (amount > unlockedBalanceOf[from]) {
-            _attemptUnlock(from, amount);
+            if (to == lubAuctionAddress) {
+                _unlockForAuction(from, amount);
+            } else {
+                _attemptUnlock(from, amount);
+            }
         }
 
         super._beforeTokenTransfer(from, to, amount);
