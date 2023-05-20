@@ -155,7 +155,7 @@ contract FANATICO is ERC20, ERC20Burnable, ERC20FlashMint, AccessControl, Reentr
                 lockedTokens.pop();
             } else {
                 unlockedNew += amount;
-                lockedTokens[i - 1].amount -= amount;
+                lockedTokens[i - 1].amount -= uint192(amount);
                 break;
             }
         }
