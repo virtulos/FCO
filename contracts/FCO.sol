@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/token/ERC20/extensions/ERC20FlashMint.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-contract FANATICO is ERC20, ERC20Burnable, ERC20FlashMint, AccessControl, ReentrancyGuard {
+contract FANATICO8 is ERC20, ERC20Burnable, ERC20FlashMint, AccessControl, ReentrancyGuard {
     constructor(
         string memory _name,
         string memory _symbol)
@@ -147,7 +147,7 @@ contract FANATICO is ERC20, ERC20Burnable, ERC20FlashMint, AccessControl, Reentr
 
         uint256 unlockedNew;
 
-        LockedToken[] storage lockedTokens = _lockedTokens[account];
+        LockedToken[] storage lockedTokens = _lockedTokens[owner];
         for (uint i = lockedTokens.length; i > 0; i--) {
             if (lockedTokens[i - 1].amount <= amount) {
                 unlockedNew += lockedTokens[i - 1].amount;
