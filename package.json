@@ -1,6 +1,6 @@
 {
   "name": "fanatico-smart-contracts",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "FCO smart contracts",
   "main": "index.js",
   "repository": "https://github.com/virtulos/FCO.git",
