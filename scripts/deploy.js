@@ -3,15 +3,15 @@ const {ethers} = require("hardhat");
 
 
 // config deploy arguments
-const name = 'FANATICO'
-const symbol = 'FCO'
+const name = 'FANATICO8'
+const symbol = 'FCO8'
 const initialMint = utils.parseEther('10')
 
 async function main() {
     console.log("--------------------------------DEPLOY----------------------------------")
 
-    const contractFactory = await ethers.getContractFactory("FANATICO");
-    const token = await contractFactory.deploy(name, symbol, initialMint);
+    const contractFactory = await ethers.getContractFactory("FANATICO8");
+    const token = await contractFactory.deploy(name, symbol);
     await token.deployed();
 
     console.log('Deployed at: ', token.address)
