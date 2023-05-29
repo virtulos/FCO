@@ -29,7 +29,7 @@ contract FANATICO8 is ERC20, ERC20Burnable, ERC20FlashMint, AccessControl, Reent
 
     bytes32 private constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 private constant REWARDS_MANAGER_ROLE = keccak256("REWARDS_MANAGER_ROLE");
-    uint64 public constant LOCK_DURATION = 1 hours;
+    uint64 public constant LOCK_DURATION = 30 days;
     uint public constant MAX_TRANSFER_PER_TRANSACTION = 10 ** (18 + 6); // 1 million tokens max per transaction
 
     uint public constant SIGNUP_REWARDS = 3 * 10 ** 18; // 3 token max per signup
@@ -108,7 +108,7 @@ contract FANATICO8 is ERC20, ERC20Burnable, ERC20FlashMint, AccessControl, Reent
 
     function dailyBonus(address account) public onlyRole(REWARDS_MANAGER_ROLE) nonReentrant {
         require(signupBonusClaimed[account], "Signup bonus not claimed yet");
-        require(block.timestamp - lastClaimedTime[account] >= 10 minutes, "Daily bonus already claimed today");
+        require(block.timestamp - lastClaimedTime[account] >= 1 days, "Daily bonus already claimed today");
 
         _mint(account, DAILY_REWARDS);
         _lockTokens(account, DAILY_REWARDS);
