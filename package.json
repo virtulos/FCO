@@ -11,8 +11,8 @@
     "clean": "rm -rf cache && rm -rf artifacts && npx hardhat clean",
     "test": "npx hardhat test",
     "coverage": "npx hardhat coverage",
-    "deploy": "npx hardhat run --config hardhat.config.js --network $NETWORK scripts/deploy.js",
-    "verify": "npx hardhat run --config hardhat.config.js --network $NETWORK scripts/verify.js"
+    "deploy": "npx hardhat run --config hardhat.config.js --network polygonMumbai scripts/deploy.js",
+    "verify": "npx hardhat run --config hardhat.config.js --network polygonMumbai scripts/verify.js"
   },
   "dependencies": {
     "@openzeppelin/contracts": "^4.8.3",
