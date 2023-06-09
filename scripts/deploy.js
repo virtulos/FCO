@@ -1,18 +1,38 @@
+require('dotenv').config({path: __dirname + '/.env'})
 const {ethers} = require("hardhat");
 
+// npx hardhat run --network BSCTestnet scripts/deploy.js
+// npx hardhat run --network goerli scripts/deploy.js
+// npx hardhat run --network polygonMumbai scripts/deploy.js
 
 // config deploy arguments
-const name = 'FANATICO8'
-const symbol = 'FCO8'
+const name = 'FANATICO'
+const symbol = 'FCO'
+const ADMIN_MULTISIG_WALLET_ADDRESS = process.env.ADMIN_MULTISIG_WALLET_ADDRESS
+
+if (!ADMIN_MULTISIG_WALLET_ADDRESS) {
+    throw new Error("ADMIN_MULTISIG_WALLET_ADDRESS is not defined in .env file")
+}
 
 async function main() {
     console.log("--------------------------------DEPLOY----------------------------------")
 
-    const contractFactory = await ethers.getContractFactory("FANATICO8");
-    const token = await contractFactory.deploy(name, symbol);
-    await token.deployed();
+    const FCO = await ethers.getContractFactory("FCO");
+    const fco = await FCO.deploy(name, symbol, ADMIN_MULTISIG_WALLET_ADDRESS);
+    await fco.deployed();
+    console.log('FCO', fco.address)
 
-    console.log('Deployed at: ', token.address)
+    // mock
+    const LubAuction = await ethers.getContractFactory("LubAuction");
+    const auction = await LubAuction.deploy(fco.address);
+    await auction.deployed();
+    console.log('LubAuction', auction.address)
+
+    // mock
+    const FlashBorrower = await ethers.getContractFactory("FlashBorrower");
+    const flashBorrower = await FlashBorrower.deploy();
+    await flashBorrower.deployed();
+    console.log('FlashBorrower', flashBorrower.address)
 }
 
 main().then(() => process.exit(0)).catch((error) => {

@@ -1,21 +1,39 @@
-const { ethers} = require("hardhat");
-require('dotenv').config()
+require('dotenv').config({path: __dirname + '/.env'})
 
-// put same arguments as for deploy
-const name = 'FANATICO8'
-const symbol = 'FCO8'
+// npx hardhat run --network BSCTestnet scripts/verify.js
+// npx hardhat run --network goerli scripts/verify.js
+// npx hardhat run --network polygonMumbai scripts/verify.js
 
-const deploymentAddress = '0x0000000000'; // replace with the deployed address
+// put same arguments as for deploy !!!
+const name = 'FANATICO'
+const symbol = 'FCO'
+const ADMIN_MULTISIG_WALLET_ADDRESS = process.env.ADMIN_MULTISIG_WALLET_ADDRESS
+const FCO_ADDRESS = '0xBC932A7dB7F672610e3AF7268113aDB991F53534' // use address from deploy !!!
+const LUB_AUCTION_ADDRESS = '0xed91eC514bfa4D25beA93aE37d6C3c251C4967A8' // use address from deploy !!!
+
+if (!ADMIN_MULTISIG_WALLET_ADDRESS) {
+    throw new Error("ADMIN_MULTISIG_WALLET_ADDRESS is not defined in .env file")
+}
 
 async function main() {
     console.log("--------------------------------VERIFY----------------------------------")
 
-    const contractFactory = await ethers.getContractFactory("FANATICO8");
-    const token = contractFactory.attach(deploymentAddress);
-
+    console.log("FCO")
     await hre.run("verify:verify", {
-        address: token.address,
-        constructorArguments: [name, symbol],
+        address: FCO_ADDRESS,
+        constructorArguments: [
+            name,
+            symbol,
+            ADMIN_MULTISIG_WALLET_ADDRESS
+        ],
+    });
+
+    console.log("AUCTION")
+    await hre.run("verify:verify", {
+        address: LUB_AUCTION_ADDRESS,
+        constructorArguments: [
+            FCO_ADDRESS
+        ],
     });
 }
 
