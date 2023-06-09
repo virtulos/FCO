@@ -21,7 +21,7 @@ module.exports = {
             throwOnCallFailures: true,
             allowUnlimitedContractSize: true,
             loggingEnabled: false,
-            accounts: {mnemonic: 'test test test test test test test test test test test junk'},
+            accounts: {mnemonic: 'test test test test test test test test test test test junk'}
         },
 
         // mainnet networks
