@@ -55,12 +55,41 @@ To generate the code coverage report, run the following command:
 
 ### Deploy Contracts
 
-To deploy the contracts to the BSC testnet network, run the following command:
+To deploy the contracts to the Polygon mumbai testnet network (default), run the following command:
 
 `yarn deploy` or `npm run deploy`
 
-> Note: make sure to set the `BSC_TESTNET_PRIVATE_KEY` environment variable to the private key of the account that will deploy the contracts.
+> Note: make sure to set the `PRIVATE_KEY` environment variable to the private key of the account that will deploy the contracts (see `.env.example` file).
+> You also need to set ADMIN_MULTISIG_WALLET_ADDRESS to the Gnosis Safe address that will be used to manage the contracts.
+> The deployer will have no permissions on the contracts, only the admin multisig wallet will be able to call the functions like mint or change roles.
 
+#### Change network for deployment
+
+In order to change network for deployment you can do this directly in package.json file in scripts section:
+
+```
+"scripts": {
+    "deploy": "hardhat run --network YOUR_NETWORK scripts/deploy.js",
+    "deploy:mainnet": "hardhat run --network YOUR_NETWORK scripts/deploy.js"
+  },
+```
+
+Just replace YOUR_NETWORK with a desired one from hardhat.config.js file. Supported networks so far are:
+
+Mainnet:
+- BSCMainnet
+- ETHMainnet
+- polygonMainnet
+
+Testnet:
+- sepolia
+- goerli
+- optimismGoerli
+- avalancheFujiTestnet
+- arbitrumGoerli
+- BSCTestnet
+- polygonMumbai
+- baseGoerli
 
 
 ## License
