@@ -1,204 +1,332 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.18;
+// SPDX-License-Identifier: none
+pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20FlashMint.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-contract FANATICO8 is ERC20, ERC20Burnable, ERC20FlashMint, AccessControl, ReentrancyGuard {
-    constructor(
-        string memory _name,
-        string memory _symbol)
-    ERC20(_name, _symbol) {
-        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _setupRole(MINTER_ROLE, msg.sender);
+interface IFCO {
+    struct LockInfo {
+        uint128 start;
+        uint128 count;
     }
 
-    struct LockedToken {
-        uint192 amount;
-        uint64 releaseTime;
+    struct Lock {
+        uint216 amount;
+        uint40 unlockTime;
     }
 
-    mapping(address => LockedToken[]) _lockedTokens;
-    mapping(address => uint256) public lockedVotingTokens; // temp voting lock for flash loans
-    mapping(address => uint) public unlockedBalanceOf;
-    mapping(address => bool) public signupBonusClaimed;
-    mapping(address => uint) public lastClaimedTime; // last time the user claimed their daily rewards (subject of locking for 24h)
+    struct AggregateData {
+        string name;
+        string symbol;
+        uint decimals;
+        uint256 balance;
+        uint256 locked;
+        uint256 unlocked;
+        uint256 auction;
+        uint256 rewardsEpoch;
+        LockInfo locksInfo;
+        Lock[] locks;
+    }
 
-    bytes32 private constant MINTER_ROLE = keccak256("MINTER_ROLE");
-    bytes32 private constant REWARDS_MANAGER_ROLE = keccak256("REWARDS_MANAGER_ROLE");
-    uint64 public constant LOCK_DURATION = 30 days;
-    uint public constant MAX_TRANSFER_PER_TRANSACTION = 10 ** (18 + 6); // 1 million tokens max per transaction
+    struct RewardItem {
+        address account;
+        uint128 mint;
+        uint128 lock;
+    }
+    enum RewardResult {
+        OK,
+        SIGNUP,
+        ALREADY_REWARDED,
+        WRONG_AMOUNT,
+        WRONG_MINT_AMOUNT
+    }
+    function aggregate(address account) external view returns (AggregateData memory data);
 
-    uint public constant SIGNUP_REWARDS = 3 * 10 ** 18; // 3 token max per signup
-    uint public constant DAILY_REWARDS = 1 * 10 ** 18; // 1 token max per day
+    function auctionUse(address account, uint216 amount) external;
 
-    address public lubAuctionAddress;
+    function auctionReturn(address account, uint216 amount, address mintTo) external;
 
-    error InsufficientBalance(uint _amount);
-    error InsufficientUnlocked();
-    error ZeroValueNotAllowed();
+    function votingLocked(address account) external returns (uint256);
+}
 
-    event TokensLocked(address indexed _owner, uint indexed _amount, uint indexed _lockedUntil);
-    event TokensUnlocked(address indexed _owner, uint indexed _amount);
-    event SignupBonusClaimed(address indexed _owner, uint indexed _amount);
-    event DailyRewardsClaimed(address indexed _owner, uint indexed _amount);
-    event LubAuctionAddressChanged(address indexed _oldAddress, address indexed _newAddress);
+contract FCO is IFCO, ERC20, ERC20Burnable, ERC20FlashMint, AccessControl {
 
-    function zeroValueCheck(uint _amount) private pure {
-        if (_amount == 0) {
-            revert ZeroValueNotAllowed();
+    // ------------------------------- STORAGE -------------------------------
+
+    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
+    bytes32 public constant REWARDS_MANAGER_ROLE = keccak256("REWARDS_MANAGER_ROLE");
+    bytes32 public constant AUCTION_ROLE = keccak256("AUCTION_ROLE");
+
+    uint128 public constant SIGNUP_REWARD = 3 * 1e18; // 3 token max per signup
+    uint128 public constant EPOCH_REWARD = 1 * 1e18; // 1 token max per day
+    uint128 public constant MAX_TRANSFER = 1_000_000 * 1e18; // 1 million tokens max per transfer
+    uint32 public constant EPOCH_DURATION = 1 days;
+    uint32 public constant LOCK_DURATION = EPOCH_DURATION * 30;
+
+    mapping(address => LockInfo) public locksInfos;
+    mapping(address => mapping(uint256 => Lock)) public locks;
+    mapping(address => uint256) public votingLocked;
+    mapping(address => uint256) public auctionLocked;
+    mapping(address => uint40) public rewardsEpoch;
+
+    // ------------------------------- CONSTRUCT -------------------------------
+
+    constructor(string memory name, string memory symbol, address admin) ERC20(name, symbol) {
+        _setupRole(DEFAULT_ADMIN_ROLE, admin);
+    }
+
+    // ------------------------------- VIEW -------------------------------
+
+    // all required data in single request    
+    function aggregate(address account) public view returns (AggregateData memory data) {
+        data.name = name();
+        data.symbol = symbol();
+        data.decimals = decimals();
+        data.balance = balanceOf(account);
+        (data.locked, data.unlocked) = internalBalance(account);
+        data.auction = auctionLocked[account];
+        data.rewardsEpoch = rewardsEpoch[account];
+
+        LockInfo memory locksInfo = locksInfos[account];
+        data.locksInfo = locksInfo;
+
+        data.locks = new Lock[](locksInfo.count - locksInfo.start);
+        uint idx;
+        for (uint i = locksInfo.start; i < locksInfo.count;) {
+            data.locks[idx] = locks[account][i];
+            unchecked {i++;
+                idx ++;}
         }
     }
 
-    function ensureBalanceEnough(address _address, uint _amount) private view {
-        zeroValueCheck(_amount);
-        if (_amount > balanceOf(_address)) {
-            revert InsufficientBalance(_amount);
+    // calculates current locked tokens of account
+    function internalBalance(address account) public view returns (uint256 locked, uint256 unlocked) {
+        LockInfo memory locksInfo = locksInfos[account];
+        for (uint i = locksInfo.start; i < locksInfo.count;) {
+            Lock memory userLock = locks[account][i];
+            if (userLock.unlockTime > block.timestamp) {
+                locked += userLock.amount;
+            } else {
+                unlocked += userLock.amount;
+            }
+            unchecked {i++;}
         }
     }
 
-    function _lockTokens(address account, uint amount) private {
-        uint releaseTime = block.timestamp + LOCK_DURATION;
-        require(amount <= balanceOf(account) - unlockedBalanceOf[account], "Free balance lock exceeded");
-        _lockedTokens[account].push(LockedToken(uint192(amount), uint64(releaseTime)));
-        emit TokensLocked(account, amount, releaseTime);
+    // calculates current epoch
+    function currentEpoch() public view returns (uint40) {
+        return uint40(block.timestamp / EPOCH_DURATION * EPOCH_DURATION);
     }
 
     function mintUnlocked(address account, uint256 amount) public onlyRole(MINTER_ROLE) {
         _mint(account, amount);
-        unlockedBalanceOf[account] += amount;
     }
 
-    function mintLocked(address account, uint256 amount) public onlyRole(MINTER_ROLE) {
-        _mint(account, amount);
-        _lockTokens(account, amount);
+    function lock(address account, uint216 amount) public onlyRole(MINTER_ROLE) {
+        _validTransferAmount(amount, true);
+        _lock(account, amount);
     }
 
-    // Override flashMint function to add voting lock
-    function flashLoan(
-        IERC3156FlashBorrower receiver,
-        address token,
-        uint256 amount,
-        bytes calldata data
-    ) public override returns (bool) {
-        lockedVotingTokens[address(receiver)] += amount;
-        lockedVotingTokens[msg.sender] += amount;
-        bool result = super.flashLoan(receiver, token, amount, data);
+    // ------------------------------- REWARDS MANAGER -------------------------------
 
-        lockedVotingTokens[address(receiver)] = 0;
-        lockedVotingTokens[msg.sender] = 0;
+    // process signup or rewards distribution
+    function processRewards(RewardItem[] calldata rewardItems) public onlyRole(REWARDS_MANAGER_ROLE) returns (RewardResult[] memory results) {
+        results = new RewardResult[](rewardItems.length);
 
-        return result;
-    }
+        for (uint256 i = 0; i < rewardItems.length; i++) {
+            address account = rewardItems[i].account;
+            uint40 lastEpoch = rewardsEpoch[account];
+            uint40 currEpoch = currentEpoch();
 
+            if (lastEpoch == 0) {
+                rewardsEpoch[account] = currEpoch;
+                _lock(account, SIGNUP_REWARD);
 
-    function signupBonus(address account) public onlyRole(REWARDS_MANAGER_ROLE) nonReentrant {
-        require(!signupBonusClaimed[account], "Signup bonus already claimed");
-
-        _mint(account, SIGNUP_REWARDS);
-        _lockTokens(account, SIGNUP_REWARDS);
-
-        signupBonusClaimed[account] = true;
-        lastClaimedTime[account] = block.timestamp;
-        emit SignupBonusClaimed(account, SIGNUP_REWARDS);
-    }
-
-    function dailyBonus(address account) public onlyRole(REWARDS_MANAGER_ROLE) nonReentrant {
-        require(signupBonusClaimed[account], "Signup bonus not claimed yet");
-        require(block.timestamp - lastClaimedTime[account] >= 1 days, "Daily bonus already claimed today");
-
-        _mint(account, DAILY_REWARDS);
-        _lockTokens(account, DAILY_REWARDS);
-
-        lastClaimedTime[account] = block.timestamp;
-        emit DailyRewardsClaimed(account, DAILY_REWARDS);
-    }
-
-    function _attemptUnlock(address account, uint desiredAmount) private {
-        ensureBalanceEnough(account, desiredAmount);
-
-        uint unlocked = unlockedBalanceOf[account];
-
-        LockedToken[] storage lockedTokens = _lockedTokens[account];
-        for (uint i = lockedTokens.length; i > 0; i--) {
-            if (lockedTokens[i - 1].releaseTime <= block.timestamp) {
-                unlocked += lockedTokens[i - 1].amount;
-                lockedTokens.pop();
-                //locked amounts are located sequentially
+                results[i] = RewardResult.SIGNUP;
+                emit Signup(account, SIGNUP_REWARD);
                 continue;
             }
 
-            break;
-        }
-
-        if (desiredAmount > unlocked) {
-            revert InsufficientUnlocked();
-        }
-
-        unlockedBalanceOf[account] = unlocked;
-    }
-
-    function _unlockForAuction(address owner, uint256 amount) private {
-        ensureBalanceEnough(owner, amount);
-        require(amount <= balanceOf(owner) - unlockedBalanceOf[owner], "Not enough locked tokens");
-
-        uint256 unlockedNew;
-
-        LockedToken[] storage lockedTokens = _lockedTokens[owner];
-        for (uint i = lockedTokens.length; i > 0; i--) {
-            if (lockedTokens[i - 1].amount <= amount) {
-                unlockedNew += lockedTokens[i - 1].amount;
-                amount -= lockedTokens[i - 1].amount;
-                lockedTokens.pop();
-            } else {
-                unlockedNew += amount;
-                lockedTokens[i - 1].amount -= uint192(amount);
-                break;
+            if (lastEpoch == currEpoch) {
+                results[i] = RewardResult.ALREADY_REWARDED;
+                continue;
             }
-        }
 
-        require(unlockedNew == amount, "Unlocked amount mismatch");
-    }
+            uint128 mintAmount = rewardItems[i].mint;
+            uint128 lockAmount = rewardItems[i].lock;
+            uint128 amount = mintAmount + lockAmount;
 
-    function _beforeTokenTransfer(address from, address to, uint256 amount) internal override {
-        if (from == address(0)) {
-            return;
-        }
+            uint40 timePast = currEpoch - lastEpoch;
+            uint40 numberEpochsPast = timePast / EPOCH_DURATION;
 
-        require(amount <= MAX_TRANSFER_PER_TRANSACTION, "MAX_TRANSFER_PER_TRANSACTION");
-        if (amount > unlockedBalanceOf[from]) {
-            if (to == lubAuctionAddress) {
-                _unlockForAuction(from, amount);
-            } else {
-                _attemptUnlock(from, amount);
+            if (amount > numberEpochsPast * EPOCH_REWARD
+                || !_validTransferAmount(amount, false)
+                || !_nonZeroAmount(amount, false)
+            ) {
+                results[i] = RewardResult.WRONG_AMOUNT;
+                continue;
             }
-        }
 
-        super._beforeTokenTransfer(from, to, amount);
-    }
+            if (mintAmount != 0) {
+                uint216 allowedMintAmount = timePast > LOCK_DURATION ? (timePast - LOCK_DURATION) / EPOCH_DURATION * EPOCH_REWARD : 0;
 
-    function _afterTokenTransfer(address from, address to, uint256 amount) internal override {
-        if (from == address(0)) {
-            return;
-        }
+                if (mintAmount > allowedMintAmount) {
+                    results[i] = RewardResult.WRONG_MINT_AMOUNT;
+                    continue;
+                }
 
-        unlockedBalanceOf[from] -= amount;
-        unlockedBalanceOf[to] += amount;
+                _mint(account, mintAmount);
+            }
 
-        super._afterTokenTransfer(from, to, amount);
-    }
+            if (lockAmount != 0) {
+                _lock(account, lockAmount);
+            }
 
-    function changeLubAuctionAddress(address _lubAuctionAddress) public onlyRole(DEFAULT_ADMIN_ROLE) {
-        require(_lubAuctionAddress != address(0), "Zero address not allowed for LUB auction");
+            rewardsEpoch[account] = currEpoch;
 
-        if (_lubAuctionAddress != lubAuctionAddress) {
-            address oldAddress = lubAuctionAddress;
-            lubAuctionAddress = _lubAuctionAddress;
-
-            emit LubAuctionAddressChanged(oldAddress, _lubAuctionAddress);
+            emit Reward(account, mintAmount, lockAmount, currEpoch);
         }
     }
+
+    // ------------------------------- AUCTION -------------------------------
+
+    function auctionUse(address account, uint216 amount) public onlyRole(AUCTION_ROLE) {
+        _nonZeroAmount(amount, true);
+        _validTransferAmount(amount, true);
+
+        require(tx.origin == account, "Not allowed");
+
+        (uint256 unlocked, uint256 locked) = internalBalance(account); // unlock all possible locks first if they expired
+        uint256 unlockAmount = unlocked + locked;
+
+        require(amount <= balanceOf(account) + unlockAmount, "Low collated balance"); // check if is enough entire balance
+
+        if (amount >= unlockAmount) {// if not enough unlocked
+            locksInfos[account] = LockInfo(0, 0); // unlock all
+            if (amount > unlockAmount) {
+                _burn(account, amount - unlockAmount); // burn left over 
+            }
+        } else {
+            _unlock(account, amount, 0);
+        }
+
+        auctionLocked[account] += amount;
+    }
+
+    function auctionReturn(address account, uint216 amount, address to) public onlyRole(AUCTION_ROLE) {
+        require(auctionLocked[account] >= amount, "Low auction balance");
+        unchecked {
+            auctionLocked[account] -= amount;
+        }
+
+        if (to != address(0)) {
+            _mint(to, amount);
+        } else {
+            _nonZeroAmount(amount, true);
+            _validTransferAmount(amount, true);
+            _lock(account, amount);
+        }
+    }
+
+    // ------------------------------- INTERNAL -------------------------------
+
+    function _beforeTokenTransfer(address from, address, uint256 amount) internal override {
+        _nonZeroAmount(amount, true);
+
+        if (votingLocked[msg.sender] == 0) {
+            _validTransferAmount(amount, true);
+        } else {
+            return; // flash loan 
+        }
+
+        if (from == address(0)) return;
+
+        uint216 unlocked = _unlock(from, 0, 0); // unlock all possible locks first if they expired in every transfer                     
+        if (unlocked != 0) _mint(from, unlocked);
+    }
+
+    function _lock(address account, uint216 amount) private {
+        uint40 unlockTime = currentEpoch() + LOCK_DURATION;
+
+        LockInfo storage locksInfo = locksInfos[account];
+
+        if (locksInfo.count == 0 || unlockTime > locks[account][locksInfo.count - 1].unlockTime) {
+            locks[account][locksInfo.count] = Lock(amount, unlockTime);
+            locksInfo.count ++;
+        } else {
+            locks[account][locksInfo.count - 1].amount += amount;
+        }
+
+        emit LockTokens(account, amount, unlockTime);
+    }
+
+    function _unlock(address account, uint216 unlockAmount, uint128 count) private returns (uint216 unlocked) {
+        LockInfo memory locksInfo = locksInfos[account];
+
+        if (locksInfo.count == 0) return unlocked; // if no locks present skip next
+
+        if (count == 0) {// if common unlock
+            count = locksInfo.count;
+        } else {// if count provided check it
+            require(count >= locksInfo.start && count <= locksInfo.count, "Bad range");
+        }
+
+        for (uint256 i = locksInfo.start; i < count;) {
+            Lock storage userLock = locks[account][i];
+
+            if (unlockAmount == 0) {// if unlock amount not specified
+                if (userLock.unlockTime <= block.timestamp) {// unlock all expired locks
+                    unlocked += userLock.amount; // unlock entire
+                    locksInfo.start ++; // shift start index forward
+                } else {
+                    break;
+                }
+            } else {// if unlock amount requested (auction)
+                uint216 remaining = unlockAmount - unlocked; // determine remaining amount
+                if (remaining > userLock.amount) {// if remaining amount higher then current lock amount
+                    unlocked += userLock.amount; // unlock entire 
+                    locksInfo.start ++; // shift start index forward
+                } else {
+                    unchecked {
+                        userLock.amount -= remaining; // unlock only remaining
+                    }
+                    break;
+                }
+            }
+            unchecked {i++;}
+        }
+
+        if (unlocked != 0) {
+            if (locksInfo.start == locksInfo.count) {// reset locks if reach end
+                locksInfos[account] = LockInfo(0, 0);
+            } else {
+                locksInfos[account].start = locksInfo.start;
+            }
+
+            emit UnlockTokens(account, unlocked);
+        }
+    }
+
+    function _nonZeroAmount(uint256 amount, bool revertOnFalse) internal pure returns (bool success) {
+        success = amount != 0;
+        if (revertOnFalse) {
+            require(success, "Zero amount");
+        }
+    }
+
+    function _validTransferAmount(uint256 amount, bool revertOnFalse) internal pure returns (bool success) {
+        success = amount <= MAX_TRANSFER;
+        if (revertOnFalse) {
+            require(success, "Max transfer");
+        }
+    }
+
+    // ------------------------------- EVENTS -------------------------------
+
+    event Signup(address indexed owner, uint256 amount);
+    event Reward(address indexed owner, uint128 mint, uint128 lock, uint40 epoch);
+    event LockTokens(address indexed owner, uint216 amount, uint40 unlockTime);
+    event UnlockTokens(address indexed owner, uint256 amount);
 }
