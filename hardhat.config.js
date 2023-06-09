@@ -129,7 +129,18 @@ module.exports = {
             polygonMumbai: process.env.POLYGON_API_KEY,
             avalancheFujiTestnet: process.env.AVAX_API_KEY,
             arbitrumGoerli: process.env.ARBITRUM_API_KEY,
-            BSCTestnet: process.env.BSCSCAN_API_KEY
-        }
+            BSCTestnet: process.env.BSCSCAN_API_KEY,
+            baseGoerli:'PLACEHOLDER_STRING' // we don't use it because we have customChains
+        },
+        customChains: [
+            {
+                network: "baseGoerli",
+                chainId: 84531,
+                urls: {
+                    apiURL: "https://api-goerli.basescan.org/api",
+                    browserURL: "https://goerli.basescan.org"
+                }
+            }
+        ]
     }
 };
