@@ -1,5 +1,9 @@
 require('dotenv').config({path: __dirname + '/.env'})
 
+// npx hardhat run --network BSCTestnet scripts/verify.js
+// npx hardhat run --network goerli scripts/verify.js
+// npx hardhat run --network polygonMumbai scripts/verify.js
+
 // put same arguments as for deploy !!!
 const name = 'FANATICO'
 const symbol = 'FCO'

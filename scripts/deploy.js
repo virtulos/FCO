@@ -1,6 +1,10 @@
 require('dotenv').config({path: __dirname + '/.env'})
 const {ethers} = require("hardhat");
 
+// npx hardhat run --network BSCTestnet scripts/deploy.js
+// npx hardhat run --network goerli scripts/deploy.js
+// npx hardhat run --network polygonMumbai scripts/deploy.js
+
 // config deploy arguments
 const name = 'FANATICO'
 const symbol = 'FCO'
