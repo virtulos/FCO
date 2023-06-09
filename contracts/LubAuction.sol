@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: none
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.18;
 
 import { IFCO } from "./FCO.sol";
 

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: none
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.18;
 
 import "@openzeppelin/contracts/interfaces/IERC3156FlashBorrower.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
