@@ -11,6 +11,10 @@ const ADMIN_MULTISIG_WALLET_ADDRESS = process.env.ADMIN_MULTISIG_WALLET_ADDRESS
 const FCO_ADDRESS = '0xBC932A7dB7F672610e3AF7268113aDB991F53534' // use address from deploy !!!
 const LUB_AUCTION_ADDRESS = '0xed91eC514bfa4D25beA93aE37d6C3c251C4967A8' // use address from deploy !!!
 
+if (!ADMIN_MULTISIG_WALLET_ADDRESS) {
+    throw new Error("ADMIN_MULTISIG_WALLET_ADDRESS is not defined in .env file")
+}
+
 async function main() {
     console.log("--------------------------------VERIFY----------------------------------")
 

@@ -10,6 +10,10 @@ const name = 'FANATICO'
 const symbol = 'FCO'
 const ADMIN_MULTISIG_WALLET_ADDRESS = process.env.ADMIN_MULTISIG_WALLET_ADDRESS
 
+if (!ADMIN_MULTISIG_WALLET_ADDRESS) {
+    throw new Error("ADMIN_MULTISIG_WALLET_ADDRESS is not defined in .env file")
+}
+
 async function main() {
     console.log("--------------------------------DEPLOY----------------------------------")
 
