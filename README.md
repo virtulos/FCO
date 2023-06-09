@@ -43,6 +43,8 @@ To run the tests, run the following command:
 
 `yarn test` or `npm test`
 
+![img.png](unitTests.png)
+
 
 ### Generate Coverage Report
 
