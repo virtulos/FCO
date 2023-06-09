@@ -34,21 +34,21 @@ module.exports = {
         BSCMainnet: {
             url: 'https://bsc-dataseed.binance.org',
             chainId: 56,
-            accounts: privateKey,
+            accounts: [privateKey],
             timeout: timeout,
             gas: gas
         },
         ETHMainnet: {
             url: 'https://eth.llamarpc.com',
             chainId: 1,
-            accounts: privateKey,
+            accounts: [privateKey],
             timeout: timeout,
             gas: gas
         },
         PolygonMainnet: {
             url: 'https://polygon.llamarpc.com',
             chainId: 137,
-            accounts: privateKey,
+            accounts: [privateKey],
             timeout: timeout,
             gas: gas
         },
@@ -58,56 +58,56 @@ module.exports = {
         sepolia: {
             url: 'https://rpc.sepolia.org',
             chainId: 2357,
-            accounts: privateKey,
+            accounts: [privateKey],
             timeout: timeout,
             gas: gas
         },
         goerli: {
             url: 'https://rpc.ankr.com/eth_goerli',
             chainId: 5,
-            accounts: privateKey,
+            accounts: [privateKey],
             timeout: timeout,
             gas: gas
         },
         optimismGoerli: {
             url: 'https://goerli.optimism.io',
             chainId: 420,
-            accounts: privateKey,
+            accounts: [privateKey],
             timeout: timeout,
             gas: gas
         },
         avalancheFujiTestnet: {
             url: 'https://rpc.ankr.com/avalanche_fuji',
             chainId: 43113,
-            accounts: privateKey,
+            accounts: [privateKey],
             timeout: timeout,
             gas: gas
         },
         arbitrumGoerli: {
             url: 'https://arbitrum-goerli.public.blastapi.io',
             chainId: 421613,
-            accounts: privateKey,
+            accounts: [privateKey],
             timeout: timeout,
             gas: gas
         },
         BSCTestnet: {
             url: 'https://bsc-dataseed.binance.org/',
             chainId: 97,
-            accounts: privateKey,
+            accounts: [privateKey],
             timeout: timeout,
             gas: gas
         },
         polygonMumbai: {
             url: 'https://matic-mumbai.chainstacklabs.com',
             chainId: 80001,
-            accounts: privateKey,
+            accounts: [privateKey],
             timeout: timeout,
             gas: gas
         },
         baseGoerli: {
             url: 'https://goerli.base.org',
             chainId: 84531,
-            accounts: privateKey,
+            accounts: [privateKey],
             timeout: timeout,
             gas: gas
         }
