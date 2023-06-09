@@ -11,6 +11,7 @@ This repository contains the source code for Fanatico smart contracts (FCO) deve
     - [Run Tests](#run-tests)
     - [Generate Coverage Report](#generate-coverage-report)
     - [Deploy Contracts](#deploy-contracts)
+    - [Verify Contracts](#verify-contracts)
 - [License](#license)
 
 ## Prerequisites
@@ -90,6 +91,16 @@ Testnet:
 - BSCTestnet
 - polygonMumbai
 - baseGoerli
+
+### Verify Contracts
+
+:bangbang: All the parameters in verify script must match the deploy parameters. Once deployment is done, please change `FCO_ADDRESS` variable in [scripts/verify.js](./scripts/verify.js) file to the address of the deployed contract.
+
+To verify the contracts on Etherscan or similar platforms (depends on the chain to deploy), run the following command:
+
+`yarn verify` or `npm run verify`
+
+> Note: make sure to set the API keys variables in the `.env` file depending on a chosen chain (see `.env.example` file).
 
 
 ## License
