@@ -45,7 +45,7 @@ module.exports = {
             timeout: timeout,
             gas: gas
         },
-        PolygonMainnet: {
+        polygonMainnet: {
             url: 'https://polygon.llamarpc.com',
             chainId: 137,
             accounts: [privateKey],
@@ -110,6 +110,26 @@ module.exports = {
             accounts: [privateKey],
             timeout: timeout,
             gas: gas
+        }
+    },
+
+    etherscan: {
+        // Your API key for Etherscan or similar block explorers
+        // Obtain one at https://etherscan.io/ or alternative websites for other chains
+        apiKey: {
+            // mainnet
+            BSCMainnet: process.env.BSCSCAN_API_KEY,
+            ETHMainnet: process.env.ETH_API_KEY,
+            polygonMainnet: process.env.POLYGON_API_KEY,
+
+            // testnet
+            goerli: process.env.ETH_API_KEY,
+            sepolia: process.env.ETH_API_KEY,
+            optimismGoerli: process.env.OPTIMISM_API_KEY,
+            polygonMumbai: process.env.POLYGON_API_KEY,
+            avalancheFujiTestnet: process.env.AVAX_API_KEY,
+            arbitrumGoerli: process.env.ARBITRUM_API_KEY,
+            BSCTestnet: process.env.BSCSCAN_API_KEY
         }
     }
 };
