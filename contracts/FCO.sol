@@ -120,7 +120,30 @@ contract FCO is IFCO, ERC20, ERC20Burnable, ERC20FlashMint, AccessControl {
         return uint40(block.timestamp / EPOCH_DURATION * EPOCH_DURATION);
     }
 
-    function mintUnlocked(address account, uint256 amount) public onlyRole(MINTER_ROLE) {
+    // ------------------------------- PUBLIC -------------------------------
+
+    // flash loan consider voting locked 
+    function flashLoan(IERC3156FlashBorrower receiver, address token, uint256 amount, bytes calldata data) public override returns (bool result) {
+        votingLocked[address(receiver)] += amount;
+        votingLocked[msg.sender] += amount;
+
+        token = address(this);
+        result = super.flashLoan(receiver, token, amount, data);
+
+        votingLocked[address(receiver)] = 0;
+        votingLocked[msg.sender] = 0;
+    }
+
+    // for case if user has too much locks and out of gas on transfer execution 
+    function unlock(uint128 count) public {
+        uint216 unlocked = _unlock(msg.sender, 0, count);
+        require(unlocked != 0, "Nothing to unlock");
+        _mint(msg.sender, unlocked);
+    }
+
+    // ------------------------------- MINTER -------------------------------
+
+    function mint(address account, uint256 amount) public onlyRole(MINTER_ROLE) {
         _mint(account, amount);
     }
 
