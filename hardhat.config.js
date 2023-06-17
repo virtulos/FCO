@@ -52,7 +52,13 @@ module.exports = {
             timeout: timeout,
             gas: gas
         },
-
+        arbitrumOne: {
+            url: 'https://arb-mainnet-public.unifra.io',
+            chainId: 42161,
+            accounts: [privateKey],
+            timeout: timeout,
+            gas: gas
+        },
 
         // testnet networks
         sepolia: {
@@ -121,6 +127,7 @@ module.exports = {
             BSCMainnet: process.env.BSCSCAN_API_KEY,
             ETHMainnet: process.env.ETH_API_KEY,
             polygonMainnet: process.env.POLYGON_API_KEY,
+            arbitrumOne: process.env.ARBITRUM_API_KEY,
 
             // testnet
             goerli: process.env.ETH_API_KEY,
