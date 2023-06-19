@@ -1,10 +1,5 @@
 const { utils } = require("ethers");
-const chai = require('chai');
-const { expect } = chai;
-const chaiAsPromised = require('chai-as-promised');
-
-chai.use(chaiAsPromised);
-
+const { expect } = require('chai');
 const { ethers } = require("hardhat");
 const { time } = require("@nomicfoundation/hardhat-network-helpers"); 
 
@@ -83,7 +78,7 @@ describe('FCO', async function () {
                 await this.fco.connect(deployer).lock(acc1.address, '100')
                 await time.increase(EPOCH_DURATION)
             }             
-            expect((await this.fco.aggregate(acc1.address)).locks.length === 5).to.be.true
+            expect((await this.fco.aggregate(acc1.address)).locks.length == 5).to.be.true
 
             await time.increase(EPOCH_DURATION * 25)
            
@@ -119,7 +114,7 @@ describe('FCO', async function () {
                 { account: acc1.address, mint: '0', lock: '0' }
             ]          
             
-            expect((await this.fco.connect(rewarder).callStatic.processRewards(rewardItems))[0] === 1).to.be.true
+            expect((await this.fco.connect(rewarder).callStatic.processRewards(rewardItems))[0] == 1).to.be.true
             await expect(this.fco.connect(rewarder).processRewards(rewardItems)).to.be.fulfilled
 
             expect((await this.fco.internalBalance(acc1.address)).locked.eq(SIGNUP_REWARD)).to.be.true
@@ -134,9 +129,9 @@ describe('FCO', async function () {
             
             const results = await this.fco.connect(rewarder).callStatic.processRewards(rewardItems)
             
-            expect(results[0] === 1).to.be.true
-            expect(results[1] === 1).to.be.true
-            expect(results[2] === 1).to.be.true
+            expect(results[0] == 1).to.be.true
+            expect(results[1] == 1).to.be.true  
+            expect(results[2] == 1).to.be.true            
         });
 
         it('not allow to process twice', async function() {   
@@ -147,8 +142,8 @@ describe('FCO', async function () {
             
             const results = await this.fco.connect(rewarder).callStatic.processRewards(rewardItems)
             
-            expect(results[0] === 1).to.be.true
-            expect(results[1] === 2).to.be.true
+            expect(results[0] == 1).to.be.true
+            expect(results[1] == 2).to.be.true            
         });
 
         it('allow to process epoch reward', async function() {   
@@ -162,7 +157,7 @@ describe('FCO', async function () {
             rewardItems[0] = { account: acc1.address, mint: '0', lock: EPOCH_REWARD }
 
             const results = await this.fco.connect(rewarder).callStatic.processRewards(rewardItems)
-            expect(results[0] === 0).to.be.true
+            expect(results[0] == 0).to.be.true
 
             await expect(this.fco.connect(rewarder).processRewards(rewardItems)).to.be.fulfilled           
             expect((await this.fco.internalBalance(acc1.address)).locked.eq(SIGNUP_REWARD.add(EPOCH_REWARD))).to.be.true
@@ -179,19 +174,19 @@ describe('FCO', async function () {
             rewardItems[0] = { account: acc1.address, mint: '1', lock: EPOCH_REWARD }
 
             const results = await this.fco.connect(rewarder).callStatic.processRewards(rewardItems)
-            expect(results[0] === 3).to.be.true
+            expect(results[0] == 3).to.be.true
         });
 
         it('allow to process past epochs and check max allowed amounts', async function() {   
             await expect(this.fco.connect(rewarder).processRewards([{ account: acc1.address, mint: '0', lock: '0' }])).to.be.fulfilled
             await time.increase(LOCK_DURATION)
                  
-            expect((await this.fco.connect(rewarder).callStatic.processRewards([{ account: acc1.address, mint: '0', lock: EPOCH_REWARD.mul(30) }]))[0] === 0).to.be.true
+            expect((await this.fco.connect(rewarder).callStatic.processRewards([{ account: acc1.address, mint: '0', lock: EPOCH_REWARD.mul(30) }]))[0] == 0).to.be.true
 
-            expect((await this.fco.connect(rewarder).callStatic.processRewards([{ account: acc1.address, mint: EPOCH_REWARD.mul(30), lock: '0' }]))[0] === 4).to.be.true
+            expect((await this.fco.connect(rewarder).callStatic.processRewards([{ account: acc1.address, mint: EPOCH_REWARD.mul(30), lock: '0' }]))[0] == 4).to.be.true
 
             await time.increase(EPOCH_DURATION)
-            expect((await this.fco.connect(rewarder).callStatic.processRewards([{ account: acc1.address, mint: EPOCH_REWARD, lock: '0' }]))[0] === 0).to.be.true
+            expect((await this.fco.connect(rewarder).callStatic.processRewards([{ account: acc1.address, mint: EPOCH_REWARD, lock: '0' }]))[0] == 0).to.be.true
         });
 
         it('allow to process past epochs with mint and lock and check amounts', async function() {   
@@ -215,11 +210,11 @@ describe('FCO', async function () {
             
             const results = await this.fco.connect(rewarder).callStatic.processRewards(rewardItems)
             
-            expect(results[0] === 0).to.be.true
-            expect(results[1] === 0).to.be.true
-            expect(results[2] === 3).to.be.true
-            expect(results[3] === 3).to.be.true
-            expect(results[4] === 4).to.be.true
+            expect(results[0] == 0).to.be.true
+            expect(results[1] == 0).to.be.true
+            expect(results[2] == 3).to.be.true
+            expect(results[3] == 3).to.be.true
+            expect(results[4] == 4).to.be.true
 
             await expect(this.fco.connect(rewarder).processRewards(rewardItems)).to.be.fulfilled
 
@@ -236,11 +231,11 @@ describe('FCO', async function () {
 
             const results2 = await this.fco.connect(rewarder).callStatic.processRewards(rewardItems2)
 
-            expect(results2[0] === 0).to.be.true
-            expect(results2[1] === 0).to.be.true
-            expect(results2[2] === 0).to.be.true
-            expect(results2[3] === 0).to.be.true
-            expect(results2[4] === 0).to.be.true
+            expect(results2[0] == 0).to.be.true
+            expect(results2[1] == 0).to.be.true
+            expect(results2[2] == 0).to.be.true
+            expect(results2[3] == 0).to.be.true
+            expect(results2[4] == 0).to.be.true
 
             await expect(this.fco.connect(rewarder).processRewards(rewardItems2)).to.be.fulfilled
 
@@ -408,3 +403,4 @@ describe('FCO', async function () {
 function randInt(min, max) {
     return parseInt(Math.random() * (max - min) + min);
 }
+// 0x0000000000000000000000000000000000000000

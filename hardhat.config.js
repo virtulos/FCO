@@ -1,153 +1,88 @@
-require('dotenv').config()
+require('dotenv').config({path:__dirname+'/.env'})
 require("@nomiclabs/hardhat-etherscan");
+require('@openzeppelin/hardhat-upgrades');
 require("@nomiclabs/hardhat-ethers");
+require("@nomicfoundation/hardhat-chai-matchers");
+require("hardhat-gas-reporter");
+require('solidity-coverage')
 
-const timeout = 300000;
-const gas = 15000000;
-
-const privateKey = process.env.PRIVATE_KEY;
-
-if (!privateKey) {
-    throw new Error('Please set your PRIVATE_KEY in a .env file');
-}
-
-/** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
-    defaultNetwork: "hardhat",
-    solidity: {
-        compilers: [
-            {version: "0.8.18", settings: {optimizer: {enabled: true, runs: 200}}}
-        ]
+  defaultNetwork: "hardhat",
+  solidity: {
+    compilers: [
+      { version: "0.8.19", settings: { optimizer: { enabled: true, runs: 200 } } },     
+    ],
+  },
+ 
+  networks: {
+    hardhat: {
+      //forking: { url: `https://polygon-rpc.com` },
+      //chainId: 137,
+      //forking: { url: `https://goerli.infura.io/v3/c101d7466e634aaa93a3415b994fc00b` },
+      //chainId: 5,
+      gasPrice: 'auto',
+      throwOnTransactionFailures: true,
+      throwOnCallFailures: true,
+      allowUnlimitedContractSize: true,      
+      loggingEnabled: false, 
+      //loggingEnabled: true,      
+      accounts: { mnemonic: 'test test test test test test test test test test test junk' },
     },
-    networks: {
-        hardhat: {
-            chainId: 1,
-            gasPrice: 'auto',
-            throwOnTransactionFailures: true,
-            throwOnCallFailures: true,
-            allowUnlimitedContractSize: true,
-            loggingEnabled: false,
-            accounts: {mnemonic: 'test test test test test test test test test test test junk'}
-        },
-
-        // mainnet networks
-        BSCMainnet: {
-            url: 'https://bsc-dataseed.binance.org',
-            chainId: 56,
-            accounts: [privateKey],
-            timeout: timeout,
-            gas: gas
-        },
-        ETHMainnet: {
-            url: 'https://eth.llamarpc.com',
-            chainId: 1,
-            accounts: [privateKey],
-            timeout: timeout,
-            gas: gas
-        },
-        polygonMainnet: {
-            url: 'https://polygon.llamarpc.com',
-            chainId: 137,
-            accounts: [privateKey],
-            timeout: timeout,
-            gas: gas
-        },
-        arbitrumOne: {
-            url: 'https://arb-mainnet-public.unifra.io',
-            chainId: 42161,
-            accounts: [privateKey],
-            timeout: timeout,
-            gas: gas
-        },
-
-        // testnet networks
-        sepolia: {
-            url: 'https://rpc.sepolia.org',
-            chainId: 2357,
-            accounts: [privateKey],
-            timeout: timeout,
-            gas: gas
-        },
-        goerli: {
-            url: 'https://rpc.ankr.com/eth_goerli',
-            chainId: 5,
-            accounts: [privateKey],
-            timeout: timeout,
-            gas: gas
-        },
-        optimismGoerli: {
-            url: 'https://goerli.optimism.io',
-            chainId: 420,
-            accounts: [privateKey],
-            timeout: timeout,
-            gas: gas
-        },
-        avalancheFujiTestnet: {
-            url: 'https://rpc.ankr.com/avalanche_fuji',
-            chainId: 43113,
-            accounts: [privateKey],
-            timeout: timeout,
-            gas: gas
-        },
-        arbitrumGoerli: {
-            url: 'https://arbitrum-goerli.public.blastapi.io',
-            chainId: 421613,
-            accounts: [privateKey],
-            timeout: timeout,
-            gas: gas
-        },
-        BSCTestnet: {
-            url: 'https://bsc-dataseed.binance.org/',
-            chainId: 97,
-            accounts: [privateKey],
-            timeout: timeout,
-            gas: gas
-        },
-        polygonMumbai: {
-            url: 'https://matic-mumbai.chainstacklabs.com',
-            chainId: 80001,
-            accounts: [privateKey],
-            timeout: timeout,
-            gas: gas
-        },
-        baseGoerli: {
-            url: 'https://goerli.base.org',
-            chainId: 84531,
-            accounts: [privateKey],
-            timeout: timeout,
-            gas: gas
-        }
+    mainnet: {
+      url: "https://rpc.ankr.com/eth",
+      chainId: 1,
+      gasPrice: 'auto',
+      accounts:  [`${process.env.PRIVATE_KEY}`]
     },
-
-    etherscan: {
-        // Your API key for Etherscan or similar block explorers
-        // Obtain one at https://etherscan.io/ or alternative websites for other chains
-        apiKey: {
-            // mainnet
-            BSCMainnet: process.env.BSCSCAN_API_KEY,
-            ETHMainnet: process.env.ETH_API_KEY,
-            polygonMainnet: process.env.POLYGON_API_KEY,
-            arbitrumOne: process.env.ARBITRUM_API_KEY,
-
-            // testnet
-            goerli: process.env.ETH_API_KEY,
-            sepolia: process.env.ETH_API_KEY,
-            optimismGoerli: process.env.OPTIMISM_API_KEY,
-            polygonMumbai: process.env.POLYGON_API_KEY,
-            avalancheFujiTestnet: process.env.AVAX_API_KEY,
-            arbitrumGoerli: process.env.ARBITRUM_API_KEY,
-            BSCTestnet: process.env.BSCSCAN_API_KEY,
-            baseGoerli:'PLACEHOLDER_STRING' // we don't use it because we have customChains
-        },
-        customChains: [
-            {
-                network: "baseGoerli",
-                chainId: 84531,
-                urls: {
-                    apiURL: "https://api-goerli.basescan.org/api",
-                    browserURL: "https://goerli.basescan.org"
-                }
-            }
-        ]
+    polygon: {
+      url: "https://polygon-rpc.com",
+      chainId: 137,
+      gasPrice: 'auto',
+      accounts: [`${process.env.PRIVATE_KEY}`]
+    },
+    polygonMumbai: {
+      url: "https://rpc.ankr.com/polygon_mumbai",
+      chainId: 80001,
+      gasPrice: 'auto',
+      accounts: [`${process.env.PRIVATE_KEY}`]
+    },
+    goerli: {
+      url: "https://goerli.infura.io/v3/c101d7466e634aaa93a3415b994fc00b",
+      chainId: 5,
+      gasPrice: 'auto',
+      accounts: [`${process.env.PRIVATE_KEY}`]
+    },
+    bscTestnet: {
+      url: "https://data-seed-prebsc-1-s1.binance.org:8545",
+      chainId: 97,
+      gasPrice: 'auto',
+      accounts:  [`${process.env.PRIVATE_KEY}`]
+    }, 
+    //sepolia: {
+    //  url: "https://data-seed-prebsc-1-s1.binance.org:8545",
+    //  chainId: 97,
+    //  gasPrice: 'auto',
+    //  accounts:  [`${process.env.PRIVATE_KEY}`]
+    //},
+  },
+  
+  etherscan: {
+    apiKey: {
+      bscTestnet: process.env.BSC_API_KEY,
+      goerli: process.env.ETH_API_KEY,
+      sepolia: process.env.ETH_API_KEY,
+      polygonMumbai: process.env.PLY_API_KEY,      
     }
+  },
+
+  gasReporter: {
+    enabled: false,
+    enabled: true,
+    //currency: 'USD',
+    //token: 'MATIC',
+    //gasPrice: 10,
+    //coinmarketcap: '821bcd2b-52ef-4e37-99a0-2e88f2af6089',
+    //gasPriceApi: 'https://api.polygonscan.com/api?module=proxy&action=eth_gasPrice',
+    //showTimeSpent: true
+  },
 };
