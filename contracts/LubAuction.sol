@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: none
-pragma solidity ^0.8.18;
+pragma solidity ^0.8.19;
 
 import { IFCO } from "./FCO.sol";
 
@@ -26,4 +26,5 @@ contract LubAuction {
     function payout(uint128 amount) public {
         fco.auctionReturn(msg.sender, amount, msg.sender);
     }
+
 }
