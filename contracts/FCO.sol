@@ -42,7 +42,7 @@ interface IFCO {
     function aggregate(address account) external view returns (AggregateData memory data);
     function auctionUse(address account, uint216 amount) external;
     function auctionReturn(address account, uint216 amount, address mintTo) external;
-    function votingLocked(address account) external returns (uint256);    
+    function votingLocked(address account) external returns (uint256);
 }
 
 contract FCO is IFCO, ERC20, ERC20Burnable, ERC20FlashMint, AccessControl {   
@@ -52,10 +52,10 @@ contract FCO is IFCO, ERC20, ERC20Burnable, ERC20FlashMint, AccessControl {
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 public constant REWARDS_MANAGER_ROLE = keccak256("REWARDS_MANAGER_ROLE");
     bytes32 public constant AUCTION_ROLE = keccak256("AUCTION_ROLE");
+    bytes32 public constant SPENDER_ROLE = keccak256("SPENDER_ROLE");
 
     uint128 public constant SIGNUP_REWARD = 3 * 1e18; // 3 token max per signup
     uint128 public constant EPOCH_REWARD = 1 * 1e18; // 1 token max per day
-    uint128 public constant MAX_TRANSFER = 1_000_000 * 1e18; // 1 million tokens max per transfer
     uint32 public constant EPOCH_DURATION = 1 days;
     uint32 public constant LOCK_DURATION = EPOCH_DURATION * 30;
         
@@ -74,6 +74,7 @@ contract FCO is IFCO, ERC20, ERC20Burnable, ERC20FlashMint, AccessControl {
     // ------------------------------- VIEW -------------------------------
 
     // all required data in single request    
+    // call this method from dapp to get contract data and account data in one response
     function aggregate(address account) public view returns (AggregateData memory data) {
         data.name = name();
         data.symbol = symbol();
@@ -94,7 +95,7 @@ contract FCO is IFCO, ERC20, ERC20Burnable, ERC20FlashMint, AccessControl {
         } 
 	}
 
-    // calculates current locked tokens of account
+    // calculates current locked and unlocked tokens of account at current time
     function internalBalance(address account) public view returns (uint256 locked, uint256 unlocked) {
 		LockInfo memory locksInfo = locksInfos[account];
 		for (uint i = locksInfo.start; i < locksInfo.count;) {
@@ -141,7 +142,6 @@ contract FCO is IFCO, ERC20, ERC20Burnable, ERC20FlashMint, AccessControl {
     }
 
     function lock(address account, uint216 amount) public onlyRole(MINTER_ROLE) {
-        _validTransferAmount(amount, true);
         _lock(account, amount);        
     }
 
@@ -177,10 +177,7 @@ contract FCO is IFCO, ERC20, ERC20Burnable, ERC20FlashMint, AccessControl {
             uint40 timePast = currEpoch - lastEpoch;            
             uint40 numberEpochsPast = timePast / EPOCH_DURATION;
            
-            if (amount > numberEpochsPast * EPOCH_REWARD 
-                || !_validTransferAmount(amount, false) 
-                || !_nonZeroAmount(amount, false)
-                ) {
+            if (amount > numberEpochsPast * EPOCH_REWARD || !_nonZeroAmount(amount, false)) {
                 results[i] = RewardResult.WRONG_AMOUNT;
                 continue;
             }
@@ -210,8 +207,7 @@ contract FCO is IFCO, ERC20, ERC20Burnable, ERC20FlashMint, AccessControl {
     
     function auctionUse(address account, uint216 amount) public onlyRole(AUCTION_ROLE) {
         _nonZeroAmount(amount, true);
-        _validTransferAmount(amount, true);   
-
+        
         require(tx.origin == account, "Not allowed");             
         
         (uint256 unlocked, uint256 locked) = internalBalance(account); // unlock all possible locks first if they expired
@@ -241,7 +237,6 @@ contract FCO is IFCO, ERC20, ERC20Burnable, ERC20FlashMint, AccessControl {
             _mint(to, amount);
         } else {
             _nonZeroAmount(amount, true);
-            _validTransferAmount(amount, true);  
             _lock(account, amount);
         }        
     }
@@ -251,12 +246,7 @@ contract FCO is IFCO, ERC20, ERC20Burnable, ERC20FlashMint, AccessControl {
     function _beforeTokenTransfer(address from, address, uint256 amount) internal override {        
         _nonZeroAmount(amount, true);
         
-        if (votingLocked[msg.sender] == 0) {
-            _validTransferAmount(amount, true);
-        } else {
-            return; // flash loan 
-        }
-       
+        if (votingLocked[msg.sender] != 0) return; // flash loan                
         if (from == address(0)) return; 
                
         uint216 unlocked = _unlock(from, 0, 0); // unlock all possible locks first if they expired in every transfer                     
@@ -332,11 +322,14 @@ contract FCO is IFCO, ERC20, ERC20Burnable, ERC20FlashMint, AccessControl {
         }         
     }
 
-    function _validTransferAmount(uint256 amount, bool revertOnFalse) internal pure returns (bool success) {
-        success = amount <= MAX_TRANSFER;
-        if (revertOnFalse) {
-            require(success, "Max transfer");
-        }         
+    function _spendAllowance(
+        address owner,
+        address spender,
+        uint256 amount
+    ) internal override {
+        if (!hasRole(SPENDER_ROLE, spender)) {
+            super._spendAllowance(owner, spender, amount);
+        }       
     }
     
     // ------------------------------- EVENTS -------------------------------

@@ -3,12 +3,12 @@ const { expect } = require('chai');
 const { ethers } = require("hardhat");
 const { time } = require("@nomicfoundation/hardhat-network-helpers"); 
 
-// npx hardhat test test/fco.test.js --grep "Mint"
+// npx hardhat test test/fco.test.js --grep ""
 let deployer, rewarder, acc1, acc2, acc3, acc4, acc5, acc6, acc7, acc8
 const DAY = 60 * 60 * 24
 const SIGNUP_REWARD = utils.parseEther('3')
 const EPOCH_REWARD = utils.parseEther('1')
-const MAX_TRANSFER_PER_TRANSACTION = utils.parseEther('1000000')
+
 const EPOCH_DURATION = DAY
 const LOCK_DURATION = DAY * 30
 
@@ -33,10 +33,16 @@ describe('FCO', async function () {
         const FlashBorrower = await ethers.getContractFactory("FlashBorrower");
         this.flashBorrower = await FlashBorrower.deploy();
         await this.flashBorrower.deployed(); 
+
+        // mock
+        const Marketplace = await ethers.getContractFactory("Marketplace");
+        this.marketplace = await Marketplace.deploy(this.fco.address);
+        await this.marketplace.deployed();
         
         await this.fco.grantRole(await this.fco.MINTER_ROLE(), deployer.address);
         await this.fco.grantRole(await this.fco.REWARDS_MANAGER_ROLE(), rewarder.address);
         await this.fco.grantRole(await this.fco.AUCTION_ROLE(), this.auction.address);
+        
     });
 
     describe('Mint/Transfer/Locks', function() {     
@@ -90,17 +96,6 @@ describe('FCO', async function () {
             expect((await this.fco.internalBalance(acc1.address)).unlocked.eq('400')).to.be.true
             await expect(this.fco.connect(acc1).transfer(acc2.address, '400')).to.be.fulfilled
         });
-
-        it('max tx transfer', async function() {    
-            await expect(this.fco.connect(deployer).mint(acc1.address, MAX_TRANSFER_PER_TRANSACTION + 1)).to.be.rejected
-            await expect(this.fco.connect(deployer).mint(acc1.address, MAX_TRANSFER_PER_TRANSACTION)).to.be.fulfilled
-            
-            await expect(this.fco.connect(acc1).transfer(acc2.address, MAX_TRANSFER_PER_TRANSACTION + 1)).to.be.rejected
-            await expect(this.fco.connect(acc1).transfer(acc2.address, MAX_TRANSFER_PER_TRANSACTION)).to.be.fulfilled     
-            
-            await expect(this.fco.connect(deployer).lock(acc1.address, MAX_TRANSFER_PER_TRANSACTION + 1)).to.be.rejected
-        });
-
     })  
 
     describe('Rewards', function() {     
@@ -396,6 +391,16 @@ describe('FCO', async function () {
                 ethers.constants.MaxUint256.sub('100'),
                 '0x00'
             )).to.be.fulfilled                        
+        });
+    })
+
+    // npx hardhat test test/fco.test.js --grep "Marketplace"
+    describe('Marketplace', function() {     
+        it('allow to buy without approve', async function() {   
+            await this.fco.mint(acc1.address, '100')
+            await expect(this.marketplace.connect(acc1).buy('100')).to.be.rejected
+            await this.fco.grantRole(await this.fco.SPENDER_ROLE(), this.marketplace.address);
+            await expect(this.marketplace.connect(acc1).buy('100')).to.be.fulfilled
         });
     })
 });
