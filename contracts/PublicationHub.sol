@@ -52,7 +52,7 @@ interface IPublicationHub {
     struct AggregateData {
         PaymentTokenData[] paymentTokens;
     }
-    function aggregate(address account) external view returns (AggregateData memory data);
+    function aggregate(address account, address[] tokens) external view returns (AggregateData memory data);
 }
 
 contract PublicationHub is IPublicationHub, ERC1155Upgradeable, AccessControl, EventEmitter {
@@ -62,12 +62,10 @@ contract PublicationHub is IPublicationHub, ERC1155Upgradeable, AccessControl, E
     address public serviceWallet;           
     address public signerWallet;
     IFCOToken public fco;
-    bool private internaCall;
-   
+       
     mapping(uint256 => Publication) public publications;
     mapping(address => PaymentToken) public paymentTokens; 
-    address[] public paymentTokensList;   
-        
+            
     // --------------------- CONSTRUCT ---------------------    
     function initialize(
         address authority_, 
@@ -80,8 +78,7 @@ contract PublicationHub is IPublicationHub, ERC1155Upgradeable, AccessControl, E
         __AccessControl_init(authority_);
         __ERC1155_init(uri_);
         __EventEmitter_init(eventEmitter_);
-        eventEmitter.register();
-
+        
         setServiceWallet(serviceWallet_);
         setSignerWallet(signerWallet_);
         setPaymentToken(address(0), PaymentToken(true, 50));
@@ -89,10 +86,10 @@ contract PublicationHub is IPublicationHub, ERC1155Upgradeable, AccessControl, E
         fco = fco_;
     }
     
-    function aggregate(address account) public view returns (AggregateData memory data) {        
-        data.paymentTokens = new PaymentTokenData[](paymentTokensList.length);
-        for (uint256 i = 0; i < paymentTokensList.length; i++) {
-            address tokenAddress = paymentTokensList[i];
+    function aggregate(address account, address[] tokens) public view returns (AggregateData memory data) {        
+        data.paymentTokens = new PaymentTokenData[](tokens.length);
+        for (uint256 i = 0; i < tokens.length; i++) {
+            address tokenAddress = tokens[i];
             PaymentToken memory paymentToken = paymentTokens[tokenAddress]; 
 
             data.paymentTokens[i] = PaymentTokenData({
@@ -115,14 +112,15 @@ contract PublicationHub is IPublicationHub, ERC1155Upgradeable, AccessControl, E
 
     function setServiceWallet(address serviceWallet_) public onlyAdmin {
         serviceWallet = serviceWallet_;
+        emitEvent("HUB_SERVICE_WALLET", abi.encode(serviceWallet_));
     }
     
     function setSignerWallet(address signerWallet_) public onlyAdmin {
         signerWallet = signerWallet_;
+        emitEvent("HUB_SIGNER_WALLET", abi.encode(signerWallet_));
     }
 
     function setPaymentToken(address addess_, PaymentToken memory paymentToken_) public onlyAdmin {
-        paymentTokensList.push(addess_);
         paymentTokens[addess_] = paymentToken_;
         emitEvent("HUB_PAYMENT_TOKEN", abi.encode(addess_, paymentToken_));
     }
@@ -240,6 +238,7 @@ contract PublicationHub is IPublicationHub, ERC1155Upgradeable, AccessControl, E
         }
         
         if (paymentTokenAddress == address(0)) {
+            require(msg.value == price, "Wrong native token amount");
             if (authorAmount != 0) {
                 (bool authorSuccess, ) = payable(publication.author).call{value: authorAmount }("");
                 require(authorSuccess, "Author payment error");
@@ -251,6 +250,7 @@ contract PublicationHub is IPublicationHub, ERC1155Upgradeable, AccessControl, E
             (bool serviceSuccess, ) = payable(serviceWallet).call{value: serviceAmount }("");
             require(serviceSuccess, "Service payment error");    
         } else {
+            require(msg.value == 0, "Not accept native token");
             if (paymentTokenAddress == address(fco)) {
                 require(approveWithSignData.data.amount == price, "Approve FCO wrong amount");      
                 require(address(this) == approveWithSignData.data.spender, "Approve FCO wrong spender"); 

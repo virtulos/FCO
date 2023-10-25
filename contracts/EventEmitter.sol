@@ -5,8 +5,7 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import { AccessControl } from "./AccessControl.sol";
 
 interface IEventEmitter {
-	function emitEvent(bytes32 action, bytes memory data) external;
-	function register() external;
+	function emitEvent(bytes32 action, bytes memory data) external;	
 }
 
 abstract contract EventEmitter is Initializable {
@@ -14,8 +13,7 @@ abstract contract EventEmitter is Initializable {
 
 	function __EventEmitter_init(address _eventEmitter) internal onlyInitializing {
         eventEmitter = IEventEmitter(_eventEmitter);
-		eventEmitter.register();
-    }
+	}
 			
 	function emitEvent(bytes32 action, bytes memory data) internal virtual {
 		eventEmitter.emitEvent(action, data);
@@ -25,15 +23,10 @@ abstract contract EventEmitter is Initializable {
 contract EventEmitterHub is IEventEmitter, AccessControl {		
 	mapping (address => bool) public emitters;
 
-	function initialize(address authority_) public virtual initializer {
-        __AccessControl_init(authority_);
+	function initialize(address authority) public virtual initializer {
+        __AccessControl_init(authority);
 	}
-    	
-	function register() public {	
-		require(tx.origin == authority.admin(), "Not allowed");
-		emitters[msg.sender] = true;
-    }
-
+    
 	function setEmitter(address emitter, bool state) public onlyAdmin {	
 		require(emitters[emitter] != state, "Already set");	
 		emitters[emitter] = state;

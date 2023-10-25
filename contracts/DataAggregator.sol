@@ -16,11 +16,11 @@ contract DataAggregator {
         hub = hub_;
     }
 	
-	function aggregate(address account) public view returns (       
+	function aggregate(address account, address[] tokens) public view returns (       
         IFCOToken.AggregateData memory fcoData,
         IPublicationHub.AggregateData memory hubData
 	) {
         fcoData = fco.aggregate(account);
-        hubData = hub.aggregate(account);
+        hubData = hub.aggregate(account, tokens);
     }	
 }
