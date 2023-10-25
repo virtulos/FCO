@@ -280,7 +280,7 @@ contract PublicationHub is IPublicationHub, ERC1155Upgradeable, AccessControl, E
         } 
     }
     
-    function decrypt(uint256 tokenId_) payable public {   
+    function decrypt(uint256 tokenId_) public {   
         uint256 encryptedId = getEncryptedId(tokenId_);
         Publication storage publication = publications[encryptedId];
         publication.copies ++;   
