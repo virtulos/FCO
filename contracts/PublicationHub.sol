@@ -267,7 +267,7 @@ contract PublicationHub is IPublicationHub, ERC1155Upgradeable, AccessControl, E
         }
     }
    
-    function transferOwner(uint256 tokenId_, address newOwner_) payable public { 
+    function transferOwner(uint256 tokenId_, address newOwner_) public { 
         uint256 encryptedId = getEncryptedId(tokenId_);        
         Publication storage publication = publications[encryptedId];
         require(publication.owner == msg.sender, "Not owner");
