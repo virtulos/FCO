@@ -82,7 +82,8 @@ contract FCOToken is IFCOToken, ERC20Upgradeable, ERC20BurnableUpgradeable, ERC2
         
     mapping(address => EpochsState) public epochsStates;
     mapping(address => mapping(uint256 => Epoch)) public epochs;
-    mapping(address => mapping(uint256 => bool)) public approvalNonces;     
+    mapping(address => mapping(uint256 => bool)) public approveWithSignNonces;  
+    mapping(address => bool) public approveWithSignRegistry;    
     
     // ------------------------------- INIT -------------------------------
     
@@ -110,6 +111,12 @@ contract FCOToken is IFCOToken, ERC20Upgradeable, ERC20BurnableUpgradeable, ERC2
 		signUpReward = signUpReward_;
         visitReward = visitReward_;
         emitEvent("FCO_SET_REWARDS", abi.encode(signUpReward, visitReward));
+	}
+
+    function setApproveWithSign(address account, bool state) public onlyAdmin {	
+		require(approveWithSignRegistry[account] != state, "Already set");	
+		approveWithSignRegistry[account] = state;
+        emitEvent("FCO_SET_APPROVE_WS", abi.encode(account, state));
 	}
    
     // ------------------------------- VIEW -------------------------------
@@ -266,10 +273,13 @@ contract FCOToken is IFCOToken, ERC20Upgradeable, ERC20BurnableUpgradeable, ERC2
 
     function approveWithSign(ApproveWithSignData calldata approveWithSignData) public {
         address account = approveWithSignData.data.account;
-        require(tx.origin == account, "Bad tx origin");
-        require(!approvalNonces[account][approveWithSignData.data.nonce], "Nonce already used");        
+        require(tx.origin == account, "Bad tx origin for approve ws");
+        require(approveWithSignRegistry[msg.sender], "Bad tx sender for approve ws");
+        require(msg.sender == approveWithSignData.data.spender, "Bad spender for approve ws");
+        
+        require(!approveWithSignNonces[account][approveWithSignData.data.nonce], "Nonce already used");        
         require(ECDSAUpgradeable.recover(ECDSAUpgradeable.toEthSignedMessageHash(keccak256(abi.encode(approveWithSignData.data))), approveWithSignData.signature) == account, "Bad signature");
-        approvalNonces[account][approveWithSignData.data.nonce] = true;   
+        approveWithSignNonces[account][approveWithSignData.data.nonce] = true;   
         _approve(account, approveWithSignData.data.spender, approveWithSignData.data.amount);   
     }
 
