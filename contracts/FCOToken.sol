@@ -73,6 +73,7 @@ interface IFCOToken {
 }
 
 contract FCOToken is IFCOToken, ERC20Upgradeable, ERC20BurnableUpgradeable, ERC20FlashMintUpgradeable, AccessControl, EventEmitter {   
+    
     // ------------------------------- STORAGE -------------------------------
     
     uint128 public signUpReward; 

@@ -52,7 +52,7 @@ interface IPublicationHub {
     struct AggregateData {
         PaymentTokenData[] paymentTokens;
     }
-    function aggregate(address account, address[] tokens) external view returns (AggregateData memory data);
+    function aggregate(address account, address[] memory tokens) external view returns (AggregateData memory data);
 }
 
 contract PublicationHub is IPublicationHub, ERC1155Upgradeable, AccessControl, EventEmitter {
@@ -86,7 +86,7 @@ contract PublicationHub is IPublicationHub, ERC1155Upgradeable, AccessControl, E
         fco = fco_;
     }
     
-    function aggregate(address account, address[] tokens) public view returns (AggregateData memory data) {        
+    function aggregate(address account, address[] memory tokens) public view returns (AggregateData memory data) {        
         data.paymentTokens = new PaymentTokenData[](tokens.length);
         for (uint256 i = 0; i < tokens.length; i++) {
             address tokenAddress = tokens[i];
