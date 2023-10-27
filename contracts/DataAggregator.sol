@@ -16,7 +16,7 @@ contract DataAggregator {
         hub = hub_;
     }
 	
-	function aggregate(address account, address[] tokens) public view returns (       
+	function aggregate(address account, address[] memory tokens) public view returns (       
         IFCOToken.AggregateData memory fcoData,
         IPublicationHub.AggregateData memory hubData
 	) {
