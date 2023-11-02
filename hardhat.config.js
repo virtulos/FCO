@@ -18,7 +18,7 @@ module.exports = {
     hardhat: {
       //forking: { url: `https://polygon-rpc.com` },
       //chainId: 137,
-      //forking: { url: `https://goerli.infura.io/v3/c101d7466e634aaa93a3415b994fc00b` },
+      //forking: { url: `https://rpc.ankr.com/eth_goerli` },
       //chainId: 5,
       gasPrice: 'auto',
       throwOnTransactionFailures: true,
@@ -47,7 +47,7 @@ module.exports = {
       accounts: [`${process.env.PRIVATE_KEY}`]
     },
     goerli: {
-      url: "https://goerli.infura.io/v3/c101d7466e634aaa93a3415b994fc00b",
+      url: "https://rpc.ankr.com/eth_goerli",
       chainId: 5,
       gasPrice: 'auto',
       accounts: [`${process.env.PRIVATE_KEY}`]

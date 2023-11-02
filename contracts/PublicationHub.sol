@@ -79,10 +79,12 @@ contract PublicationHub is IPublicationHub, ERC1155Upgradeable, AccessControl, E
         __ERC1155_init(uri_);
         __EventEmitter_init(eventEmitter_);
         
-        setServiceWallet(serviceWallet_);
-        setSignerWallet(signerWallet_);
-        setPaymentToken(address(0), PaymentToken(true, 50));
-        setPaymentToken(address(fco_), PaymentToken(true, 50));                
+        serviceWallet = serviceWallet_;
+        signerWallet = signerWallet_;
+        
+        paymentTokens[address(0)] = PaymentToken(true, 50);
+        paymentTokens[address(fco_)] = PaymentToken(true, 50);
+                   
         fco = fco_;
     }
     
@@ -354,5 +356,6 @@ contract PublicationHub is IPublicationHub, ERC1155Upgradeable, AccessControl, E
     function _isSignatureValid(bytes32 dataHash_, bytes calldata signature_, address signer_) internal pure returns (bool) {
 		return ECDSAUpgradeable.recover(ECDSAUpgradeable.toEthSignedMessageHash(dataHash_), signature_) == signer_;
 	}
-   
+
+    uint256[50] private __gap;   
 }

@@ -44,4 +44,6 @@ contract EventEmitterHub is IEventEmitter, AccessControl {
 	
 	event EmitterSet(address emitter, bool state);	
     event Event(bytes32 action, bytes data, uint256 timestamp, address origin);		
+
+	uint256[50] private __gap;
 }

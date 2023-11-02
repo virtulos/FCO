@@ -102,10 +102,11 @@ contract FCOToken is IFCOToken, ERC20Upgradeable, ERC20BurnableUpgradeable, ERC2
         __ERC20_init(name_, symbol_);
         __EventEmitter_init(eventEmitter_);           
         
+        require(lockDuration_ >= epochDuration_, "lockDuration < epochDuration!");
         epochDuration = epochDuration_;
-        lockDuration = lockDuration_; 
-        
-        setRewards(signUpReward_, visitReward_);      
+        lockDuration = lockDuration_;         
+        signUpReward = signUpReward_;
+        visitReward = visitReward_;  
     }
 
     function setRewards(uint128 signUpReward_, uint128 visitReward_) public onlyAdmin() {	
@@ -362,4 +363,6 @@ contract FCOToken is IFCOToken, ERC20Upgradeable, ERC20BurnableUpgradeable, ERC2
             require(success, "Zero amount");
         }         
     }
+
+    uint256[50] private __gap;
 }

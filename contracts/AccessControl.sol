@@ -67,4 +67,6 @@ contract Authority is Initializable, IAuthority, AccessControl {
     function setOperator(address account, bool state) public onlyAdmin {		
 		operators[account] = state;         
 	}
+
+    uint256[50] private __gap;
 }

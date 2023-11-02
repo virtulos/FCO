@@ -10,14 +10,15 @@ const helpers = require("@nomicfoundation/hardhat-network-helpers");
 // npx hardhat run --network vps scripts/deploy_upg.js
 
 
-const bcConfig = require('../bcConfig.json');
+const bcConfig = require('../../bcConfig_prod.json');
 
 async function main() {
-    const chainIdHex = await network.provider.send('eth_chainId');
+    const chainId = Number(await network.provider.send('eth_chainId'));
     const [deployer] = await ethers.getSigners();	
     const startBlock = await ethers.provider.getBlockNumber();
 
     const testers = [
+        '0xEc44b418139Fa30bdAe165a7D8484f6d7F471445',
         '0xb57624fAB624b4A7A6B46217d56D7faBC4d37f38',
         '0x1df2674903208dfa0590B7664Fa3B25da5009194',
         '0x434E7a149631553b61F757f9e425A8003C67ddb3',
@@ -39,7 +40,7 @@ async function main() {
     //}
     //return
     
-    if (!bcConfig[chainIdHex]) bcConfig[chainIdHex] = {}
+    if (!bcConfig[chainId]) bcConfig[chainId] = {}
 
 	console.log("--------------------------------DEPLOY----------------------------------")
 
@@ -47,7 +48,7 @@ async function main() {
     const authority = await upgrades.deployProxy(Authority)
     await authority.deployed();
     console.log('Authority: ', authority.address)
-    bcConfig[chainIdHex].authority = {
+    bcConfig[chainId].authority = {
 		address: authority.address,
         abi: authority.interface.format(),
 		startBlock,        
@@ -59,22 +60,22 @@ async function main() {
     ])    
     await eventEmitterHub.deployed(); 
     console.log('EventEmitterHub: ', eventEmitterHub.address)
-    bcConfig[chainIdHex].eventEmitterHub = {
+    bcConfig[chainId].eventEmitterHub = {
 		address: eventEmitterHub.address,
         abi: eventEmitterHub.interface.format(),
 		startBlock
 	}
     
 
-    //const fco = await ethers.getContractAt("FCO", bcConfig[chainIdHex].fco.address, deployer);
+    //const fco = await ethers.getContractAt("FCO", bcConfig[chainId].fco.address, deployer);
     const signUpReward = utils.parseUnits('3', 18)
     const epochReward = utils.parseUnits('1', 18)
-    const epochDuration = 60 * 60; 
-    const lockDuration = epochDuration * 3;
+    const epochDuration = 60 * 60 * 24; 
+    const lockDuration = epochDuration * 7;
     const FCO = await ethers.getContractFactory("FCOToken");    
     const fco = await upgrades.deployProxy(FCO, [
-        authority.address,
-        eventEmitterHub.address,
+        bcConfig[chainId].authority.address,
+        bcConfig[chainId].eventEmitterHub.address,
         'Fanatico', 
         'FCO', 
         signUpReward,
@@ -84,7 +85,7 @@ async function main() {
     ]);
     await fco.deployed(); 
     console.log('FCO: ', fco.address)
-    bcConfig[chainIdHex].fco = {
+    bcConfig[chainId].fco = {
 		address: fco.address,
         abi: fco.interface.format(),
 		startBlock,
@@ -97,20 +98,20 @@ async function main() {
 	}
 	
 	const PublicationHub = await ethers.getContractFactory("PublicationHub");
-	const fanaticoHub = await upgrades.deployProxy(PublicationHub, [
-        authority.address,
-        eventEmitterHub.address,
+	const publicationHub = await upgrades.deployProxy(PublicationHub, [
+        bcConfig[chainId].authority.address,
+        bcConfig[chainId].eventEmitterHub.address,
         deployer.address, 
 		deployer.address,		
-        'https://fanatico.virtulos.net/api/metadata/{id}',
+        'https://secret.fanatico.com/api/metadata/{id}',
         fco.address,
     ]);
-	await fanaticoHub.deployed(); 
-	console.log('FanaticoHub:   ', fanaticoHub.address)
+	await publicationHub.deployed(); 
+	console.log('PublicationHub:   ', publicationHub.address)
 
-    bcConfig[chainIdHex].fanaticoHub = {
-		address: fanaticoHub.address,
-        abi: fanaticoHub.interface.format(),
+    bcConfig[chainId].publicationHub = {
+		address: publicationHub.address,
+        abi: publicationHub.interface.format(),
         startBlock,
         paymentTokens: [
             {
@@ -130,18 +131,25 @@ async function main() {
 
     const DataAggregator = await ethers.getContractFactory("DataAggregator");
 	const dataAggregator = await DataAggregator.deploy(
-        fco.address,
-        fanaticoHub.address
+        bcConfig[chainId].fco.address,
+        bcConfig[chainId].publicationHub.address
     );
 	await dataAggregator.deployed(); 
 	console.log('DataAggregator:   ', dataAggregator.address)
-    bcConfig[chainIdHex].dataAggregator = {
+    bcConfig[chainId].dataAggregator = {
 		address: dataAggregator.address,
         abi: dataAggregator.interface.format()		
 	}    
 
     
-    await writeFile(`../bcConfig.json`, JSON.stringify(bcConfig, null, 4));
+    await writeFile(`../bcConfig_prod.json`, JSON.stringify(bcConfig, null, 4));
+
+    await (await eventEmitterHub.setEmitter(bcConfig[chainId].fco.address, true)).wait()
+    console.log('eventEmitterHub.setEmitter fco')
+    await (await eventEmitterHub.setEmitter(bcConfig[chainId].publicationHub.address, true)).wait()
+    console.log('eventEmitterHub.setEmitter publicationHub')
+    await (await fco.setApproveWithSign(bcConfig[chainId].publicationHub.address, true)).wait()
+    console.log('fco.setApproveWithSign')
     
     
     await fco.mintBatch(testers, testers.map(() => utils.parseUnits('1000', 18)))
