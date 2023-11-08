@@ -57,7 +57,7 @@ contract Authority is Initializable, IAuthority, AccessControl {
     function initialize() public initializer {
         __AccessControl_init(address(this));       
         admin = tx.origin;
-        operators[tx.origin] = true; 
+        //operators[tx.origin] = true; 
     }
 	
 	function setAdmin(address account) public onlyAdmin {		

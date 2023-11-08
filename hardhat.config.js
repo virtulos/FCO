@@ -16,8 +16,8 @@ module.exports = {
  
   networks: {
     hardhat: {
-      //forking: { url: `https://polygon-rpc.com` },
-      //chainId: 137,
+      //forking: { url: `https://rpc.ankr.com/eth` },
+      //chainId: 1,
       //forking: { url: `https://rpc.ankr.com/eth_goerli` },
       //chainId: 5,
       gasPrice: 'auto',

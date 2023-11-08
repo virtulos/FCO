@@ -10,12 +10,18 @@ const helpers = require("@nomicfoundation/hardhat-network-helpers");
 // npx hardhat run --network vps scripts/deploy_upg.js
 
 
+
 const bcConfig = require('../../bcConfig_prod.json');
 
 async function main() {
     const chainId = Number(await network.provider.send('eth_chainId'));
     const [deployer] = await ethers.getSigners();	
     const startBlock = await ethers.provider.getBlockNumber();
+
+
+    const adminWallet = deployer.address // controls all
+    const publicationSignerWallet = deployer.address // sing promises for buy/collect on server side
+    const publicationServiceWallet = deployer.address // receive fees from publications sells
 
     const testers = [
         '0xEc44b418139Fa30bdAe165a7D8484f6d7F471445',
@@ -50,18 +56,20 @@ async function main() {
     console.log('Authority: ', authority.address)
     bcConfig[chainId].authority = {
 		address: authority.address,
+        implementation: await upgrades.erc1967.getImplementationAddress(authority.address),
         abi: authority.interface.format(),
 		startBlock,        
 	}
 
     const EventEmitterHub = await ethers.getContractFactory("EventEmitterHub");    
     const eventEmitterHub = await upgrades.deployProxy(EventEmitterHub, [
-        authority.address
+        bcConfig[chainId].authority.address
     ])    
     await eventEmitterHub.deployed(); 
     console.log('EventEmitterHub: ', eventEmitterHub.address)
     bcConfig[chainId].eventEmitterHub = {
 		address: eventEmitterHub.address,
+        implementation: await upgrades.erc1967.getImplementationAddress(eventEmitterHub.address),
         abi: eventEmitterHub.interface.format(),
 		startBlock
 	}
@@ -87,6 +95,7 @@ async function main() {
     console.log('FCO: ', fco.address)
     bcConfig[chainId].fco = {
 		address: fco.address,
+        implementation: await upgrades.erc1967.getImplementationAddress(fco.address),
         abi: fco.interface.format(),
 		startBlock,
         config: {
@@ -101,16 +110,17 @@ async function main() {
 	const publicationHub = await upgrades.deployProxy(PublicationHub, [
         bcConfig[chainId].authority.address,
         bcConfig[chainId].eventEmitterHub.address,
-        deployer.address, 
-		deployer.address,		
+        publicationServiceWallet, 
+		publicationSignerWallet,		
         'https://secret.fanatico.com/api/metadata/{id}',
-        fco.address,
+        bcConfig[chainId].fco.address,
     ]);
 	await publicationHub.deployed(); 
 	console.log('PublicationHub:   ', publicationHub.address)
 
     bcConfig[chainId].publicationHub = {
 		address: publicationHub.address,
+        implementation: await upgrades.erc1967.getImplementationAddress(publicationHub.address),
         abi: publicationHub.interface.format(),
         startBlock,
         paymentTokens: [
@@ -121,8 +131,8 @@ async function main() {
                 decimals: 18,                
             },
             {
-                address: fco.address,
-                abi: fco.interface.format(),
+                address: bcConfig[chainId].fco.address,
+                abi: bcConfig[chainId].fco.interface,
                 symbol: 'FCO',
                 decimals: 18,                
             },
@@ -142,7 +152,7 @@ async function main() {
 	}    
 
     
-    await writeFile(`../bcConfig_prod.json`, JSON.stringify(bcConfig, null, 4));
+    //await writeFile(`../bcConfig_prod.json`, JSON.stringify(bcConfig, null, 4));
 
     await (await eventEmitterHub.setEmitter(bcConfig[chainId].fco.address, true)).wait()
     console.log('eventEmitterHub.setEmitter fco')
@@ -150,10 +160,14 @@ async function main() {
     console.log('eventEmitterHub.setEmitter publicationHub')
     await (await fco.setApproveWithSign(bcConfig[chainId].publicationHub.address, true)).wait()
     console.log('fco.setApproveWithSign')
+
+    await (await authority.setAdmin(adminWallet)).wait()
+    console.log('authority.setAdmin')
     
     
-    await fco.mintBatch(testers, testers.map(() => utils.parseUnits('1000', 18)))
-    console.log('FCO MINT')
+    
+    //await fco.mintBatch(testers, testers.map(() => utils.parseUnits('1000', 18)))
+    //console.log('FCO MINT')
 
     
     return
