@@ -35,6 +35,7 @@ interface IPublicationHub {
     }
 
     struct MintData {
+        uint256 chainId;
         address author;
         string contentUri;        
         uint128 price;
@@ -43,6 +44,7 @@ interface IPublicationHub {
     }
 
     struct CollectData {
+        uint256 chainId;
         address owner; 
         uint256 tokenId;
         uint256 price; 
@@ -57,7 +59,6 @@ interface IPublicationHub {
 
 contract PublicationHub is IPublicationHub, ERC1155Upgradeable, AccessControl, EventEmitter {
     using SafeERC20Upgradeable for IERC20Upgradeable;
-    
     uint256 public constant feeBase = 1000;    
     address public serviceWallet;           
     address public signerWallet;
@@ -85,7 +86,7 @@ contract PublicationHub is IPublicationHub, ERC1155Upgradeable, AccessControl, E
         paymentTokens[address(0)] = PaymentToken(true, 50);
         paymentTokens[address(fco_)] = PaymentToken(true, 50);
                    
-        fco = fco_;
+        fco = fco_;        
     }
     
     function aggregate(address account, address[] memory tokens) public view returns (AggregateData memory data) {        
@@ -153,6 +154,7 @@ contract PublicationHub is IPublicationHub, ERC1155Upgradeable, AccessControl, E
         IFCOToken.ApproveWithSignData calldata approveWithSignData, 
         IFCOToken.RewardsData calldata processRewardsData
         ) payable public {
+        require(mintData_.chainId == authority.chainId(), "Bad chain");
         require(_isSignatureValid(keccak256(abi.encode(mintData_, tokenId_, deadline_)), serviceSignature_, signerWallet), "Bad service signature");
         require(_isSignatureValid(keccak256(abi.encode(mintData_)), authorSignature_, mintData_.author), "Bad author signature");
                 
@@ -299,6 +301,7 @@ contract PublicationHub is IPublicationHub, ERC1155Upgradeable, AccessControl, E
         IFCOToken.ApproveWithSignData calldata approveWithSignData, 
         IFCOToken.RewardsData calldata processRewardsData
     ) payable public {
+        require(collectData_.chainId == authority.chainId(), "Bad chain");
         require(_isSignatureValid(keccak256(abi.encode(collectData_, deadline_)), serviceSignature_, signerWallet), "Bad service signature");
         require(_isSignatureValid(keccak256(abi.encode(collectData_)), ownerSignature_, collectData_.owner), "Bad author signature");               
         require(deadline_ > block.timestamp, "Transaction expired");

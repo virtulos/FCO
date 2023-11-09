@@ -48,15 +48,18 @@ abstract contract AccessControl is Initializable {
 interface IAuthority {
     function admin() external view returns (address);
     function operators(address operator) external view returns (bool);
+    function chainId() external view returns (uint256);
 }
 
 contract Authority is Initializable, IAuthority, AccessControl {
 	address public override admin;
     mapping(address => bool) public override operators; 
+    uint256 public chainId;
     
-    function initialize() public initializer {
+    function initialize(uint256 chainId_) public initializer {
         __AccessControl_init(address(this));       
         admin = tx.origin;
+        chainId = chainId_; 
         //operators[tx.origin] = true; 
     }
 	

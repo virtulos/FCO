@@ -46,6 +46,7 @@ interface IFCOToken {
         address spender;
         uint256 amount;
         uint256 nonce;
+        uint256 chainId;
     }
 
     struct ApproveWithSignData {
@@ -62,6 +63,7 @@ interface IFCOToken {
 
     struct RewardsData {
         Rewards[] rewards; 
+        uint256 chainId;
         bytes signature;
     }
 
@@ -75,16 +77,15 @@ interface IFCOToken {
 contract FCOToken is IFCOToken, ERC20Upgradeable, ERC20BurnableUpgradeable, ERC20FlashMintUpgradeable, AccessControl, EventEmitter {   
     
     // ------------------------------- STORAGE -------------------------------
-    
-    uint128 public signUpReward; 
-    uint128 public visitReward; 
-    uint40 public epochDuration;
-    uint40 public lockDuration;
-        
     mapping(address => EpochsState) public epochsStates;
     mapping(address => mapping(uint256 => Epoch)) public epochs;
     mapping(address => mapping(uint256 => bool)) public approveWithSignNonces;  
-    mapping(address => bool) public approveWithSignRegistry;    
+    mapping(address => bool) public approveWithSignRegistry;  
+
+    uint128 public signUpReward; 
+    uint128 public visitReward; 
+    uint40 public epochDuration;
+    uint40 public lockDuration;  
     
     // ------------------------------- INIT -------------------------------
     
@@ -96,7 +97,7 @@ contract FCOToken is IFCOToken, ERC20Upgradeable, ERC20BurnableUpgradeable, ERC2
         uint128 signUpReward_, 
         uint128 visitReward_, 
         uint40 epochDuration_, 
-        uint40 lockDuration_        
+        uint40 lockDuration_
     ) public initializer {
         __AccessControl_init(authority_);
         __ERC20_init(name_, symbol_);
@@ -106,7 +107,7 @@ contract FCOToken is IFCOToken, ERC20Upgradeable, ERC20BurnableUpgradeable, ERC2
         epochDuration = epochDuration_;
         lockDuration = lockDuration_;         
         signUpReward = signUpReward_;
-        visitReward = visitReward_;  
+        visitReward = visitReward_;
     }
 
     function setRewards(uint128 signUpReward_, uint128 visitReward_) public onlyAdmin() {	
@@ -220,8 +221,9 @@ contract FCOToken is IFCOToken, ERC20Upgradeable, ERC20BurnableUpgradeable, ERC2
         if (length == 0) return results;
                 
         if (!authority.operators(msg.sender)) {
-            if (rewardsData.rewards[0].epochs.length == 0) return results;                                  
-            address signer = ECDSAUpgradeable.recover(ECDSAUpgradeable.toEthSignedMessageHash(keccak256(abi.encode(rewardsData.rewards))), rewardsData.signature);
+            if (rewardsData.rewards[0].epochs.length == 0) return results; 
+            require(rewardsData.chainId == authority.chainId(), "Bad chain");                                 
+            address signer = ECDSAUpgradeable.recover(ECDSAUpgradeable.toEthSignedMessageHash(keccak256(abi.encode(rewardsData.rewards, rewardsData.chainId))), rewardsData.signature);
             require(authority.operators(signer), "Bad rewards signature");
         } 
 
@@ -278,6 +280,7 @@ contract FCOToken is IFCOToken, ERC20Upgradeable, ERC20BurnableUpgradeable, ERC2
         require(tx.origin == account, "Bad tx origin for approve ws");
         require(approveWithSignRegistry[msg.sender], "Bad tx sender for approve ws");
         require(msg.sender == approveWithSignData.data.spender, "Bad spender for approve ws");
+        require(approveWithSignData.data.chainId == authority.chainId(), "Bad chain");  
         
         require(!approveWithSignNonces[account][approveWithSignData.data.nonce], "Nonce already used");        
         require(ECDSAUpgradeable.recover(ECDSAUpgradeable.toEthSignedMessageHash(keccak256(abi.encode(approveWithSignData.data))), approveWithSignData.signature) == account, "Bad signature");

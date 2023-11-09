@@ -1,0 +1,185 @@
+{
+    "31337": {
+        "authority": {
+            "address": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+            "implementation": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+            "abi": [
+                "event Initialized(uint8 version)",
+                "function admin() view returns (address) @29000000",
+                "function authority() view returns (address) @29000000",
+                "function initialize() @29000000",
+                "function operators(address) view returns (bool) @29000000",
+                "function recover(address token_, uint256 amount_, address recipient_) @29000000",
+                "function setAdmin(address account) @29000000",
+                "function setAuthority(address _newAuthority) @29000000",
+                "function setOperator(address account, bool state) @29000000"
+            ],
+            "startBlock": 0
+        },
+        "eventEmitterHub": {
+            "address": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
+            "implementation": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+            "abi": [
+                "event EmitterSet(address emitter, bool state)",
+                "event Event(bytes32 action, bytes data, uint256 timestamp, address origin)",
+                "event Initialized(uint8 version)",
+                "function authority() view returns (address) @29000000",
+                "function emitEvent(bytes32 action, bytes data) @29000000",
+                "function emitters(address) view returns (bool) @29000000",
+                "function initialize(address authority) @29000000",
+                "function recover(address token_, uint256 amount_, address recipient_) @29000000",
+                "function setAuthority(address _newAuthority) @29000000",
+                "function setEmitter(address emitter, bool state) @29000000"
+            ],
+            "startBlock": 0,
+            "deployArgs": [
+                "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0"
+            ]
+        },
+        "fco": {
+            "address": "0x0165878A594ca255338adfa4d48449f69242Eb8F",
+            "implementation": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
+            "abi": [
+                "event Approval(address indexed owner, address indexed spender, uint256 value)",
+                "event Initialized(uint8 version)",
+                "event Transfer(address indexed from, address indexed to, uint256 value)",
+                "function aggregate(address account) view returns (tuple(string name, string symbol, uint256 decimals, uint256 balance, uint256 locked, uint256 unlocked, tuple(uint40 first, uint40 signup, uint40 rewarded, uint40 unlocked, uint40 last) epochsState, tuple(uint256 locked, uint256 unlocked, uint40 timestamp)[] lockedEpochs) data) @29000000",
+                "function allowance(address owner, address spender) view returns (uint256) @29000000",
+                "function approve(address spender, uint256 amount) returns (bool) @29000000",
+                "function approveWithSign(tuple(tuple(address account, address spender, uint256 amount, uint256 nonce) data, bytes signature) approveWithSignData) @29000000",
+                "function approveWithSignNonces(address, uint256) view returns (bool) @29000000",
+                "function approveWithSignRegistry(address) view returns (bool) @29000000",
+                "function authority() view returns (address) @29000000",
+                "function balanceOf(address account) view returns (uint256) @29000000",
+                "function burn(uint256 amount) @29000000",
+                "function burnFrom(address account, uint256 amount) @29000000",
+                "function currentEpoch() view returns (uint40) @29000000",
+                "function decimals() view returns (uint8) @29000000",
+                "function decreaseAllowance(address spender, uint256 subtractedValue) returns (bool) @29000000",
+                "function epochDuration() view returns (uint40) @29000000",
+                "function epochs(address, uint256) view returns (uint256 locked, uint256 unlocked, uint40 timestamp) @29000000",
+                "function epochsStates(address) view returns (uint40 first, uint40 signup, uint40 rewarded, uint40 unlocked, uint40 last) @29000000",
+                "function eventEmitter() view returns (address) @29000000",
+                "function flashFee(address token, uint256 amount) view returns (uint256) @29000000",
+                "function flashLoan(address receiver, address token, uint256 amount, bytes data) returns (bool result) @29000000",
+                "function increaseAllowance(address spender, uint256 addedValue) returns (bool) @29000000",
+                "function initialize(address authority_, address eventEmitter_, string name_, string symbol_, uint128 signUpReward_, uint128 visitReward_, uint40 epochDuration_, uint40 lockDuration_) @29000000",
+                "function internalBalanceOf(address account, bool includeEpochs) view returns (uint256 locked, uint256 unlocked, tuple(uint256 locked, uint256 unlocked, uint40 timestamp)[] lockedEpochs) @29000000",
+                "function lock(address account, uint256 amount) @29000000",
+                "function lockDuration() view returns (uint40) @29000000",
+                "function maxFlashLoan(address token) view returns (uint256) @29000000",
+                "function mint(address account, uint256 amount) @29000000",
+                "function mintBatch(address[] accounts, uint256[] amounts) @29000000",
+                "function mintedBalanceOf(address account) view returns (uint256) @29000000",
+                "function name() view returns (string) @29000000",
+                "function processRewards(tuple(tuple(address account, uint40[] epochs)[] rewards, bytes signature) rewardsData) returns (tuple(bool[] epochs)[] results) @29000000",
+                "function recover(address token_, uint256 amount_, address recipient_) @29000000",
+                "function setApproveWithSign(address account, bool state) @29000000",
+                "function setAuthority(address _newAuthority) @29000000",
+                "function setRewards(uint128 signUpReward_, uint128 visitReward_) @29000000",
+                "function signUpReward() view returns (uint128) @29000000",
+                "function symbol() view returns (string) @29000000",
+                "function totalSupply() view returns (uint256) @29000000",
+                "function transfer(address to, uint256 amount) returns (bool) @29000000",
+                "function transferFrom(address from, address to, uint256 amount) returns (bool) @29000000",
+                "function use(address account, uint256 amount) @29000000",
+                "function visitReward() view returns (uint128) @29000000"
+            ],
+            "startBlock": 0,
+            "config": {
+                "signUpReward": "3000000000000000000",
+                "epochReward": "1000000000000000000",
+                "epochDuration": 86400,
+                "lockDuration": 604800
+            },
+            "deployArgs": [
+                "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+                "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
+                "Fanatico",
+                "FCO",
+                "3000000000000000000",
+                "1000000000000000000",
+                "86400",
+                "604800"
+            ]
+        },
+        "publicationHub": {
+            "address": "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6",
+            "implementation": "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853",
+            "abi": [
+                "event ApprovalForAll(address indexed account, address indexed operator, bool approved)",
+                "event Initialized(uint8 version)",
+                "event TransferBatch(address indexed operator, address indexed from, address indexed to, uint256[] ids, uint256[] values)",
+                "event TransferSingle(address indexed operator, address indexed from, address indexed to, uint256 id, uint256 value)",
+                "event URI(string value, uint256 indexed id)",
+                "function aggregate(address account, address[] tokens) view returns (tuple(tuple(bool enabled, uint16 serviceFee, uint256 balance)[] paymentTokens) data) @29000000",
+                "function authority() view returns (address) @29000000",
+                "function balanceOf(address account, uint256 id) view returns (uint256) @29000000",
+                "function balanceOfBatch(address[] accounts, uint256[] ids) view returns (uint256[]) @29000000",
+                "function canRead(address account_, uint256 tokenId_) view returns (bool) @29000000",
+                "function collect(tuple(address owner, uint256 tokenId, uint256 price, address paymentToken) collectData_, uint256 deadline_, bytes ownerSignature_, bytes serviceSignature_, bool decrypt_, tuple(tuple(address account, address spender, uint256 amount, uint256 nonce) data, bytes signature) approveWithSignData, tuple(tuple(address account, uint40[] epochs)[] rewards, bytes signature) processRewardsData) payable @29000000",
+                "function decrypt(uint256 tokenId_) @29000000",
+                "function eventEmitter() view returns (address) @29000000",
+                "function fco() view returns (address) @29000000",
+                "function feeBase() view returns (uint256) @29000000",
+                "function getEncryptedId(uint256 tokenId_) pure returns (uint256) @29000000",
+                "function getPublication(uint256 tokenId_) view returns (tuple(address author, address owner, string contentUri, uint128 copies, tuple(uint128 copies, uint16 fee)[] royaltyTiers)) @29000000",
+                "function initialize(address authority_, address eventEmitter_, address serviceWallet_, address signerWallet_, string uri_, address fco_) @29000000",
+                "function isApprovedForAll(address account, address operator) view returns (bool) @29000000",
+                "function isEncrypted(uint256 tokenId_) pure returns (bool) @29000000",
+                "function mint(tuple(address author, string contentUri, uint128 price, address paymentToken, tuple(uint128 copies, uint16 fee)[] royaltyTiers) mintData_, uint256 tokenId_, uint256 deadline_, bytes authorSignature_, bytes serviceSignature_, tuple(tuple(address account, address spender, uint256 amount, uint256 nonce) data, bytes signature) approveWithSignData, tuple(tuple(address account, uint40[] epochs)[] rewards, bytes signature) processRewardsData) payable @29000000",
+                "function ownerOf(uint256 tokenId_) view returns (address) @29000000",
+                "function paymentTokens(address) view returns (bool enabled, uint16 serviceFee) @29000000",
+                "function publications(uint256) view returns (address author, address owner, string contentUri, uint128 copies) @29000000",
+                "function recover(address token_, uint256 amount_, address recipient_) @29000000",
+                "function safeBatchTransferFrom(address from, address to, uint256[] ids, uint256[] amounts, bytes data) @29000000",
+                "function safeTransferFrom(address from, address to, uint256 id, uint256 amount, bytes data) @29000000",
+                "function serviceWallet() view returns (address) @29000000",
+                "function setApprovalForAll(address operator, bool approved) @29000000",
+                "function setAuthority(address _newAuthority) @29000000",
+                "function setPaymentToken(address addess_, tuple(bool enabled, uint16 serviceFee) paymentToken_) @29000000",
+                "function setServiceWallet(address serviceWallet_) @29000000",
+                "function setSignerWallet(address signerWallet_) @29000000",
+                "function signerWallet() view returns (address) @29000000",
+                "function supportsInterface(bytes4 interfaceId) view returns (bool) @29000000",
+                "function transferOwner(uint256 tokenId_, address newOwner_) @29000000",
+                "function uri(uint256) view returns (string) @29000000"
+            ],
+            "startBlock": 0,
+            "paymentTokens": [
+                {
+                    "address": "0x0000000000000000000000000000000000000000",
+                    "abi": null,
+                    "symbol": "ETH",
+                    "decimals": 18
+                },
+                {
+                    "address": "0x0165878A594ca255338adfa4d48449f69242Eb8F",
+                    "symbol": "FCO",
+                    "decimals": 18
+                }
+            ],
+            "deployArgs": [
+                "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+                "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
+                "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+                "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+                "https://secret.fanatico.com/api/metadata/{id}",
+                "0x0165878A594ca255338adfa4d48449f69242Eb8F"
+            ]
+        },
+        "dataAggregator": {
+            "address": "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318",
+            "abi": [
+                "constructor(address fco_, address hub_)",
+                "function aggregate(address account, address[] tokens) view returns (tuple(string name, string symbol, uint256 decimals, uint256 balance, uint256 locked, uint256 unlocked, tuple(uint40 first, uint40 signup, uint40 rewarded, uint40 unlocked, uint40 last) epochsState, tuple(uint256 locked, uint256 unlocked, uint40 timestamp)[] lockedEpochs) fcoData, tuple(tuple(bool enabled, uint16 serviceFee, uint256 balance)[] paymentTokens) hubData) @29000000",
+                "function fco() view returns (address) @29000000",
+                "function hub() view returns (address) @29000000"
+            ],
+            "deployArgs": [
+                "0x0165878A594ca255338adfa4d48449f69242Eb8F",
+                "0x2279B7A0a67DB372996a5FaB50D91eAA73d2eBe6"
+            ]
+        }
+    }
+}
