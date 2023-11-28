@@ -15,27 +15,22 @@ module.exports = async function(deployer, network, accounts) {
   const tronWeb = new TronWeb({fullHost:networkConfig.fullHost}); 
 
   const deployerEthAddress = '0x' + tronWeb.address.toHex(accounts).slice(2)
-  const adminWallet = process.env.ADMIN_MULTISIG_WALLET_ADDRESS || deployerEthAddress // controls all
+  const adminWallet = deployerEthAddress // controls all
   const publicationSignerWallet = process.env.SIGNER || deployerEthAddress // sing promises for buy/collect on server side
   const publicationServiceWallet = process.env.FEES || deployerEthAddress // receive fees from publications sells
 
   // Authority
-  const authority = await deployProxy(Authority, [networkConfig.network_id], { deployer });
+  const authority = await deployProxy(Authority, [networkConfig.network_id], { deployer, redeployImplementation: 'always'});
   console.log("Authority address", authority.address)
   const authorityEthAddress = '0x' + authority.address.slice(2)
-
-  // let authorityEthAddress = "0x84181aA59d8Afd062218a1AF51144d4Cb2aafB4c"
 
   // EventEmitterHub
   const eventEmitterHubArgs = [
     authorityEthAddress
   ]
-  const eventEmitterHub = await deployProxy(EventEmitterHub, eventEmitterHubArgs, { deployer });
+  const eventEmitterHub = await deployProxy(EventEmitterHub, eventEmitterHubArgs, { deployer, redeployImplementation: 'always'});
   console.log("EventEmitterHub address", eventEmitterHub.address)
   const eventEmitterHubEthAddress ='0x' + eventEmitterHub.address.slice(2)
-
-  // let eventEmitterHubEthAddress = "0x84181aA59d8Afd062218a1AF51144d4Cb2aafB4c"
-
 
   // FCO
   const signUpReward = ethers.utils.parseUnits('3', 18)
@@ -52,7 +47,7 @@ module.exports = async function(deployer, network, accounts) {
     epochDuration.toString(),
     lockDuration.toString(),
   ]
-  const fco = await deployProxy(FCO, fcoArgs, { deployer });
+  const fco = await deployProxy(FCO, fcoArgs, { deployer, redeployImplementation: 'always'});
   console.log("fco address", fco.address)
   const fcoEthAddress ='0x' + fco.address.slice(2)
 
@@ -65,7 +60,7 @@ module.exports = async function(deployer, network, accounts) {
     'https://secret.fanatico.com/api/metadata/{id}',
     fcoEthAddress,
   ]
-  const publicationHub = await deployProxy(PublicationHub, publicationHubArgs, { deployer });
+  const publicationHub = await deployProxy(PublicationHub, publicationHubArgs, { deployer, redeployImplementation: 'always'});
   console.log("PublicationHub address", publicationHub.address)
   const publicationHubEthAddress ='0x' + publicationHub.address.slice(2)
 
