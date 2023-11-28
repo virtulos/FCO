@@ -74,7 +74,7 @@ interface IFCOToken {
     function processRewards(RewardsData calldata rewardsData) external returns (RewardsResults[] memory results);
 }
 
-contract FCOToken is IFCOToken, ERC20Upgradeable, ERC20BurnableUpgradeable, ERC20FlashMintUpgradeable, AccessControl, EventEmitter {   
+contract FCO is IFCOToken, ERC20Upgradeable, ERC20BurnableUpgradeable, ERC20FlashMintUpgradeable, AccessControl, EventEmitter {   
     
     // ------------------------------- STORAGE -------------------------------
     mapping(address => EpochsState) public epochsStates;

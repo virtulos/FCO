@@ -6,7 +6,7 @@ const tronboxConfig = require("../tronbox")
 
 const Authority = artifacts.require("Authority");
 const EventEmitterHub = artifacts.require("EventEmitterHub");
-const FCO = artifacts.require("FCOToken");
+const FCO = artifacts.require("FCO");
 const PublicationHub = artifacts.require("PublicationHub");
 const DataAggregator = artifacts.require("DataAggregator");
 
@@ -24,6 +24,8 @@ module.exports = async function(deployer, network, accounts) {
   console.log("Authority address", authority.address)
   const authorityEthAddress = '0x' + authority.address.slice(2)
 
+  // let authorityEthAddress = "0x84181aA59d8Afd062218a1AF51144d4Cb2aafB4c"
+
   // EventEmitterHub
   const eventEmitterHubArgs = [
     authorityEthAddress
@@ -31,6 +33,9 @@ module.exports = async function(deployer, network, accounts) {
   const eventEmitterHub = await deployProxy(EventEmitterHub, eventEmitterHubArgs, { deployer });
   console.log("EventEmitterHub address", eventEmitterHub.address)
   const eventEmitterHubEthAddress ='0x' + eventEmitterHub.address.slice(2)
+
+  // let eventEmitterHubEthAddress = "0x84181aA59d8Afd062218a1AF51144d4Cb2aafB4c"
+
 
   // FCO
   const signUpReward = ethers.utils.parseUnits('3', 18)
