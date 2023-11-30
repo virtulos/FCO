@@ -3,11 +3,10 @@
 
 pragma solidity ^0.8.0;
 
-import "./IAccessControlUpgradeable.sol";
-import "../utils/ContextUpgradeable.sol";
-import "../utils/StringsUpgradeable.sol";
-import "../utils/introspection/ERC165Upgradeable.sol";
-import "../proxy/utils/Initializable.sol";
+import "./IAccessControl.sol";
+import "../utils/Context.sol";
+import "../utils/Strings.sol";
+import "../utils/introspection/ERC165.sol";
 
 /**
  * @dev Contract module that allows children to implement role-based access
@@ -48,12 +47,7 @@ import "../proxy/utils/Initializable.sol";
  * accounts that have been granted it. We recommend using {AccessControlDefaultAdminRules}
  * to enforce additional security measures for this role.
  */
-abstract contract AccessControlUpgradeable is Initializable, ContextUpgradeable, IAccessControlUpgradeable, ERC165Upgradeable {
-    function __AccessControl_init() internal onlyInitializing {
-    }
-
-    function __AccessControl_init_unchained() internal onlyInitializing {
-    }
+abstract contract AccessControl is Context, IAccessControl, ERC165 {
     struct RoleData {
         mapping(address => bool) members;
         bytes32 adminRole;
@@ -82,7 +76,7 @@ abstract contract AccessControlUpgradeable is Initializable, ContextUpgradeable,
      * @dev See {IERC165-supportsInterface}.
      */
     function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
-        return interfaceId == type(IAccessControlUpgradeable).interfaceId || super.supportsInterface(interfaceId);
+        return interfaceId == type(IAccessControl).interfaceId || super.supportsInterface(interfaceId);
     }
 
     /**
@@ -117,9 +111,9 @@ abstract contract AccessControlUpgradeable is Initializable, ContextUpgradeable,
                 string(
                     abi.encodePacked(
                         "AccessControl: account ",
-                        StringsUpgradeable.toHexString(account),
+                        Strings.toHexString(account),
                         " is missing role ",
-                        StringsUpgradeable.toHexString(uint256(role), 32)
+                        Strings.toHexString(uint256(role), 32)
                     )
                 )
             );
@@ -251,11 +245,4 @@ abstract contract AccessControlUpgradeable is Initializable, ContextUpgradeable,
             emit RoleRevoked(role, account, _msgSender());
         }
     }
-
-    /**
-     * @dev This empty reserved space is put in place to allow future versions to add new
-     * variables without shifting down storage in the inheritance chain.
-     * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
-     */
-    uint256[49] private __gap;
 }

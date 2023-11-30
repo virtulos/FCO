@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: none
 pragma solidity ^0.8.19;
 
-import "./openzeppelin/token/ERC1155/ERC1155Upgradeable.sol";
-import "./openzeppelin/access/OwnableUpgradeable.sol";
-import "./openzeppelin/utils/cryptography/ECDSAUpgradeable.sol";
-import "./openzeppelin/token/ERC20/IERC20Upgradeable.sol";
-import "./openzeppelin/token/ERC20/utils/SafeERC20Upgradeable.sol";
+import "./openzeppelin/token/ERC1155/ERC1155.sol";
+import "./openzeppelin/access/Ownable.sol";
+import "./openzeppelin/utils/cryptography/ECDSA.sol";
+import "./openzeppelin/token/ERC20/IERC20.sol";
+import "./openzeppelin/token/ERC20/utils/SafeERC20.sol";
 import { IFCOToken } from "./FCOToken.sol";
 import { AccessControl } from "./AccessControl.sol";
 import { EventEmitter } from "./EventEmitter.sol";
@@ -57,8 +57,8 @@ interface IPublicationHub {
     function aggregate(address account, address[] memory tokens) external view returns (AggregateData memory data);
 }
 
-contract PublicationHub is IPublicationHub, ERC1155Upgradeable, AccessControl, EventEmitter {
-    using SafeERC20Upgradeable for IERC20Upgradeable;
+contract PublicationHub is IPublicationHub, ERC1155, AccessControl, EventEmitter {
+    using SafeERC20 for IERC20;
     uint256 public constant feeBase = 1000;    
     address public serviceWallet;           
     address public signerWallet;
@@ -68,18 +68,14 @@ contract PublicationHub is IPublicationHub, ERC1155Upgradeable, AccessControl, E
     mapping(address => PaymentToken) public paymentTokens; 
             
     // --------------------- CONSTRUCT ---------------------    
-    function initialize(
+    constructor(
         address authority_, 
         address eventEmitter_, 
         address serviceWallet_,  
         address signerWallet_,        
         string memory uri_,
         IFCOToken fco_         
-    ) public initializer {
-        __AccessControl_init(authority_);
-        __ERC1155_init(uri_);
-        __EventEmitter_init(eventEmitter_);
-        
+    ) ERC1155(uri_) AccessControl(authority_) EventEmitter(eventEmitter_) {
         serviceWallet = serviceWallet_;
         signerWallet = signerWallet_;
         
@@ -98,7 +94,7 @@ contract PublicationHub is IPublicationHub, ERC1155Upgradeable, AccessControl, E
             data.paymentTokens[i] = PaymentTokenData({
                 enabled: paymentToken.enabled,
                 serviceFee: paymentToken.serviceFee,
-                balance: tokenAddress == address(0) ? account.balance : IERC20Upgradeable(tokenAddress).balanceOf(account)
+                balance: tokenAddress == address(0) ? account.balance : IERC20(tokenAddress).balanceOf(account)
             });            
         }
 	}
@@ -262,12 +258,12 @@ contract PublicationHub is IPublicationHub, ERC1155Upgradeable, AccessControl, E
                 fco.processRewards(processRewardsData);
             }            
             if (authorAmount != 0) {
-                IERC20Upgradeable(paymentTokenAddress).safeTransferFrom(msg.sender, publication.author, authorAmount);
+                IERC20(paymentTokenAddress).safeTransferFrom(msg.sender, publication.author, authorAmount);
             }
             if (ownerAmount != 0) {
-                IERC20Upgradeable(paymentTokenAddress).safeTransferFrom(msg.sender, publication.owner, ownerAmount);
+                IERC20(paymentTokenAddress).safeTransferFrom(msg.sender, publication.owner, ownerAmount);
             }
-            IERC20Upgradeable(paymentTokenAddress).safeTransferFrom(msg.sender, serviceWallet, serviceAmount);
+            IERC20(paymentTokenAddress).safeTransferFrom(msg.sender, serviceWallet, serviceAmount);
         }
     }
    
@@ -357,8 +353,6 @@ contract PublicationHub is IPublicationHub, ERC1155Upgradeable, AccessControl, E
     }
 
     function _isSignatureValid(bytes32 dataHash_, bytes calldata signature_, address signer_) internal pure returns (bool) {
-		return ECDSAUpgradeable.recover(ECDSAUpgradeable.toEthSignedMessageHash(dataHash_), signature_) == signer_;
+		return ECDSA.recover(ECDSA.toEthSignedMessageHash(dataHash_), signature_) == signer_;
 	}
-
-    uint256[50] private __gap;   
 }

@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: none
 pragma solidity ^0.8.19;
 
-import "./openzeppelin/token/ERC20/ERC20Upgradeable.sol";
-import "./openzeppelin/token/ERC20/extensions/ERC20BurnableUpgradeable.sol";
-import "./openzeppelin/token/ERC20/extensions/ERC20FlashMintUpgradeable.sol";
-import "./openzeppelin/access/AccessControlUpgradeable.sol";
-import "./openzeppelin/utils/cryptography/ECDSAUpgradeable.sol";
+import "./openzeppelin/token/ERC20/ERC20.sol";
+import "./openzeppelin/token/ERC20/extensions/ERC20Burnable.sol";
+import "./openzeppelin/token/ERC20/extensions/ERC20FlashMint.sol";
+import "./openzeppelin/utils/cryptography/ECDSA.sol";
 import { AccessControl } from "./AccessControl.sol";
 import { EventEmitter } from "./EventEmitter.sol";
 
@@ -74,7 +73,7 @@ interface IFCOToken {
     function processRewards(RewardsData calldata rewardsData) external returns (RewardsResults[] memory results);
 }
 
-contract FCO is IFCOToken, ERC20Upgradeable, ERC20BurnableUpgradeable, ERC20FlashMintUpgradeable, AccessControl, EventEmitter {   
+contract FCO is IFCOToken, ERC20, ERC20Burnable, ERC20FlashMint, EventEmitter, AccessControl {   
     
     // ------------------------------- STORAGE -------------------------------
     mapping(address => EpochsState) public epochsStates;
@@ -89,7 +88,7 @@ contract FCO is IFCOToken, ERC20Upgradeable, ERC20BurnableUpgradeable, ERC20Flas
     
     // ------------------------------- INIT -------------------------------
     
-    function initialize(
+    constructor(
         address authority_, 
         address eventEmitter_, 
         string memory name_, 
@@ -98,11 +97,7 @@ contract FCO is IFCOToken, ERC20Upgradeable, ERC20BurnableUpgradeable, ERC20Flas
         uint128 visitReward_, 
         uint40 epochDuration_, 
         uint40 lockDuration_
-    ) public initializer {
-        __AccessControl_init(authority_);
-        __ERC20_init(name_, symbol_);
-        __EventEmitter_init(eventEmitter_);           
-        
+    ) ERC20(name_, symbol_) AccessControl(authority_) EventEmitter(eventEmitter_) {
         require(lockDuration_ >= epochDuration_, "lockDuration < epochDuration!");
         epochDuration = epochDuration_;
         lockDuration = lockDuration_;         
@@ -141,7 +136,7 @@ contract FCO is IFCOToken, ERC20Upgradeable, ERC20BurnableUpgradeable, ERC20Flas
     }
 
     function mintedBalanceOf(address account) public view returns (uint256) {
-        return ERC20Upgradeable.balanceOf(account);
+        return ERC20.balanceOf(account);
     }
     
     // calculates current locked and unlocked tokens of account at current time
@@ -176,7 +171,7 @@ contract FCO is IFCOToken, ERC20Upgradeable, ERC20BurnableUpgradeable, ERC20Flas
     
     // ------------------------------- PUBLIC -------------------------------
         
-    function flashLoan(IERC3156FlashBorrowerUpgradeable receiver, address token, uint256 amount, bytes calldata data) public override returns (bool result) {
+    function flashLoan(IERC3156FlashBorrower receiver, address token, uint256 amount, bytes calldata data) public override returns (bool result) {
         token = address(this);
         result = super.flashLoan(receiver, token, amount, data);                
     }
@@ -223,7 +218,7 @@ contract FCO is IFCOToken, ERC20Upgradeable, ERC20BurnableUpgradeable, ERC20Flas
         if (!authority.operators(msg.sender)) {
             if (rewardsData.rewards[0].epochs.length == 0) return results; 
             require(rewardsData.chainId == authority.chainId(), "Bad chain");                                 
-            address signer = ECDSAUpgradeable.recover(ECDSAUpgradeable.toEthSignedMessageHash(keccak256(abi.encode(rewardsData.rewards, rewardsData.chainId))), rewardsData.signature);
+            address signer = ECDSA.recover(ECDSA.toEthSignedMessageHash(keccak256(abi.encode(rewardsData.rewards, rewardsData.chainId))), rewardsData.signature);
             require(authority.operators(signer), "Bad rewards signature");
         } 
 
@@ -283,7 +278,7 @@ contract FCO is IFCOToken, ERC20Upgradeable, ERC20BurnableUpgradeable, ERC20Flas
         require(approveWithSignData.data.chainId == authority.chainId(), "Bad chain");  
         
         require(!approveWithSignNonces[account][approveWithSignData.data.nonce], "Nonce already used");        
-        require(ECDSAUpgradeable.recover(ECDSAUpgradeable.toEthSignedMessageHash(keccak256(abi.encode(approveWithSignData.data))), approveWithSignData.signature) == account, "Bad signature");
+        require(ECDSA.recover(ECDSA.toEthSignedMessageHash(keccak256(abi.encode(approveWithSignData.data))), approveWithSignData.signature) == account, "Bad signature");
         approveWithSignNonces[account][approveWithSignData.data.nonce] = true;   
         _approve(account, approveWithSignData.data.spender, approveWithSignData.data.amount);   
     }
@@ -366,6 +361,4 @@ contract FCO is IFCOToken, ERC20Upgradeable, ERC20BurnableUpgradeable, ERC20Flas
             require(success, "Zero amount");
         }         
     }
-
-    uint256[50] private __gap;
 }

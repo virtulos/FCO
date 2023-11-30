@@ -6,7 +6,7 @@ pragma solidity ^0.8.0;
 /**
  * @dev Standard signed math utilities missing in the Solidity language.
  */
-library SignedMathUpgradeable {
+library SignedMath {
     /**
      * @dev Returns the largest of two signed numbers.
      */

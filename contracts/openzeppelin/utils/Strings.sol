@@ -3,13 +3,13 @@
 
 pragma solidity ^0.8.0;
 
-import "./math/MathUpgradeable.sol";
-import "./math/SignedMathUpgradeable.sol";
+import "./math/Math.sol";
+import "./math/SignedMath.sol";
 
 /**
  * @dev String operations.
  */
-library StringsUpgradeable {
+library Strings {
     bytes16 private constant _SYMBOLS = "0123456789abcdef";
     uint8 private constant _ADDRESS_LENGTH = 20;
 
@@ -18,7 +18,7 @@ library StringsUpgradeable {
      */
     function toString(uint256 value) internal pure returns (string memory) {
         unchecked {
-            uint256 length = MathUpgradeable.log10(value) + 1;
+            uint256 length = Math.log10(value) + 1;
             string memory buffer = new string(length);
             uint256 ptr;
             /// @solidity memory-safe-assembly
@@ -42,7 +42,7 @@ library StringsUpgradeable {
      * @dev Converts a `int256` to its ASCII `string` decimal representation.
      */
     function toString(int256 value) internal pure returns (string memory) {
-        return string(abi.encodePacked(value < 0 ? "-" : "", toString(SignedMathUpgradeable.abs(value))));
+        return string(abi.encodePacked(value < 0 ? "-" : "", toString(SignedMath.abs(value))));
     }
 
     /**
@@ -50,7 +50,7 @@ library StringsUpgradeable {
      */
     function toHexString(uint256 value) internal pure returns (string memory) {
         unchecked {
-            return toHexString(value, MathUpgradeable.log256(value) + 1);
+            return toHexString(value, Math.log256(value) + 1);
         }
     }
 

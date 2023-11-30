@@ -1,20 +1,15 @@
 // SPDX-License-Identifier: none
 pragma solidity ^0.8.19;
 
-import "./openzeppelin/proxy/utils/Initializable.sol";
-import "./openzeppelin/token/ERC20/IERC20Upgradeable.sol";
-import "./openzeppelin/token/ERC20/utils/SafeERC20Upgradeable.sol";
+import "./openzeppelin/token/ERC20/IERC20.sol";
+import "./openzeppelin/token/ERC20/utils/SafeERC20.sol";
 
-abstract contract AccessControl is Initializable {  
-    using SafeERC20Upgradeable for IERC20Upgradeable;  
+abstract contract AccessControl {  
+    using SafeERC20 for IERC20;  
     IAuthority public authority;
 
-    function __AccessControl_init(address authority_) internal onlyInitializing {
-        __AccessControl_init_unchained(authority_);
-    }
-
-    function __AccessControl_init_unchained(address authority_) internal onlyInitializing {
-        authority = IAuthority(authority_);       
+    constructor(address authority_) {
+        authority = IAuthority(authority_);   
     }
       
     function setAuthority(IAuthority _newAuthority) external onlyAdmin {
@@ -27,7 +22,7 @@ abstract contract AccessControl is Initializable {
 		address recipient_
 	) external onlyAdmin {
         if (token_ != address(0)) {
-			IERC20Upgradeable(token_).safeTransfer(recipient_, amount_);
+			IERC20(token_).safeTransfer(recipient_, amount_);
 		} else {
 			(bool success, ) = recipient_.call{ value: amount_ }("");
 			require(success, "Can't send ETH");
@@ -51,13 +46,12 @@ interface IAuthority {
     function chainId() external view returns (uint256);
 }
 
-contract Authority is Initializable, IAuthority, AccessControl {
+contract Authority is IAuthority, AccessControl {
 	address public override admin;
     mapping(address => bool) public override operators; 
     uint256 public chainId;
     
-    function initialize(uint256 chainId_) public initializer {
-        __AccessControl_init(address(this));       
+    constructor(uint256 chainId_) AccessControl(address(this)) {
         admin = tx.origin;
         chainId = chainId_; 
         //operators[tx.origin] = true; 
@@ -70,6 +64,4 @@ contract Authority is Initializable, IAuthority, AccessControl {
     function setOperator(address account, bool state) public onlyAdmin {		
 		operators[account] = state;         
 	}
-
-    uint256[50] private __gap;
 }

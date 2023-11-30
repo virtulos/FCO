@@ -3,7 +3,7 @@
 
 pragma solidity ^0.8.0;
 
-import "../IERC1155Upgradeable.sol";
+import "../IERC1155.sol";
 
 /**
  * @dev Interface of the optional ERC1155MetadataExtension interface, as defined
@@ -11,7 +11,7 @@ import "../IERC1155Upgradeable.sol";
  *
  * _Available since v3.1._
  */
-interface IERC1155MetadataURIUpgradeable is IERC1155Upgradeable {
+interface IERC1155MetadataURI is IERC1155 {
     /**
      * @dev Returns the URI for token type `id`.
      *

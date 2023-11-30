@@ -3,12 +3,12 @@
 
 pragma solidity ^0.8.0;
 
-import "../../utils/introspection/IERC165Upgradeable.sol";
+import "../../utils/introspection/IERC165.sol";
 
 /**
  * @dev _Available since v3.1._
  */
-interface IERC1155ReceiverUpgradeable is IERC165Upgradeable {
+interface IERC1155Receiver is IERC165 {
     /**
      * @dev Handles the receipt of a single ERC1155 token type. This function is
      * called at the end of a `safeTransferFrom` after the balance has been updated.
